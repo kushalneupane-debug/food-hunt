@@ -1,0 +1,665 @@
+/* ==============================
+   GENERAL
+============================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f8f5ed;
+    color: #173c32;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+
+/* ==============================
+   NAVIGATION
+============================== */
+
+.navbar {
+    height: 72px;
+    background-color: #fffdf8;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 5%;
+
+    border-bottom: 1px solid #e9e4d9;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    font-size: 34px;
+}
+
+.logo h1 {
+    font-family: Georgia, serif;
+    font-size: 25px;
+    color: #163e33;
+}
+
+.logo p {
+    font-size: 11px;
+    color: #6f766f;
+    margin-top: 2px;
+}
+
+.navbar nav {
+    display: flex;
+    gap: 38px;
+}
+
+.navbar nav a {
+    text-decoration: none;
+    color: #263a34;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 25px 0;
+}
+
+.navbar nav a:hover {
+    color: #176247;
+}
+
+.navbar nav .active {
+    border-bottom: 3px solid #1b6b50;
+}
+
+.nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.sign-in {
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: #263a34;
+}
+
+.account-btn {
+    border: none;
+    background-color: #1c684e;
+    color: white;
+
+    padding: 12px 20px;
+
+    border-radius: 25px;
+
+    font-weight: bold;
+}
+
+.account-btn:hover {
+    background-color: #14523d;
+}
+
+
+/* ==============================
+   HERO
+============================== */
+
+.hero {
+    min-height: 390px;
+
+    display: flex;
+    align-items: center;
+
+    background:
+        linear-gradient(
+            rgba(20, 31, 25, 0.78),
+            rgba(20, 31, 25, 0.78)
+        );
+
+    color: white;
+}
+
+.hero-content {
+    width: 90%;
+    max-width: 1100px;
+    margin: auto;
+}
+
+.hero h2 {
+    font-family: Georgia, serif;
+
+    font-size: 54px;
+    line-height: 1.08;
+
+    margin-bottom: 18px;
+}
+
+.hero p {
+    font-size: 18px;
+    line-height: 1.5;
+
+    max-width: 560px;
+
+    margin-bottom: 25px;
+}
+
+
+/* ==============================
+   SEARCH
+============================== */
+
+.search-box {
+    background: white;
+
+    width: 590px;
+    max-width: 100%;
+
+    height: 55px;
+
+    border-radius: 30px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 5px 6px 5px 20px;
+}
+
+.search-icon {
+    color: #58615c;
+    font-size: 26px;
+    margin-right: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: #333;
+    background-color: white;
+}
+
+.search-box button {
+    border: none;
+
+    background-color: #1b674e;
+    color: white;
+
+    padding: 13px 27px;
+
+    border-radius: 25px;
+
+    font-weight: bold;
+}
+
+.search-box button:hover {
+    background-color: #14523d;
+}
+
+
+/* ==============================
+   MAIN SECTION
+============================== */
+
+.section {
+    max-width: 1200px;
+    margin: auto;
+
+    padding: 55px 20px;
+}
+
+.section-heading {
+    margin-bottom: 30px;
+}
+
+.restaurant-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+}
+
+.section-heading h2 {
+    font-family: Georgia, serif;
+
+    font-size: 30px;
+
+    margin-bottom: 7px;
+}
+
+.section-heading p {
+    color: #69716b;
+
+    font-size: 15px;
+}
+
+.restaurant-count {
+    color: #69716b;
+    font-size: 14px;
+}
+
+
+/* ==============================
+   RESTAURANT GRID
+============================== */
+
+.restaurant-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 25px;
+}
+
+
+/* ==============================
+   RESTAURANT CARD
+============================== */
+
+.restaurant-card {
+    background-color: #fffdf9;
+
+    border-radius: 13px;
+
+    overflow: hidden;
+
+    border: 1px solid #e5e0d6;
+
+    box-shadow:
+        0 4px 12px rgba(30, 50, 40, 0.05);
+
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+.restaurant-card:hover {
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 10px 25px rgba(30, 50, 40, 0.12);
+}
+
+
+/* ==============================
+   IMAGE PLACEHOLDER
+============================== */
+
+.image-placeholder {
+    height: 200px;
+    background: #e8e4da;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.image-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+}
+
+.image-placeholder span {
+    border: 2px dashed #aaa99f;
+
+    padding: 12px 20px;
+
+    border-radius: 8px;
+
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+
+/*
+    LATER:
+
+    You can replace the placeholder
+    with an image like this:
+
+    background-image:
+        url("images/eden.jpg");
+
+    Or we can modify the HTML later
+    to use <img> tags.
+*/
+
+
+/* ==============================
+   RESTAURANT INFORMATION
+============================== */
+
+.restaurant-info {
+    padding: 19px;
+}
+
+.restaurant-info h3 {
+    font-family: Georgia, serif;
+
+    font-size: 20px;
+
+    line-height: 1.25;
+
+    margin-bottom: 8px;
+
+    color: #183c32;
+}
+
+.restaurant-type {
+    color: #49645a;
+
+    font-size: 13px;
+
+    margin-bottom: 12px;
+}
+
+
+/* Rating / price */
+
+.details {
+    display: flex;
+
+    gap: 15px;
+
+    margin-bottom: 10px;
+
+    color: #59655f;
+
+    font-size: 13px;
+}
+
+
+/* Open / closed */
+
+.status {
+    font-size: 12px;
+
+    margin-bottom: 12px;
+}
+
+.status.open {
+    color: #23764f;
+}
+
+.status.closed {
+    color: #9a5c4c;
+}
+
+
+/* Address */
+
+.address {
+    color: #555f5a;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    margin-bottom: 12px;
+}
+
+
+/* Description */
+
+.description {
+    color: #68716b;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    min-height: 60px;
+
+    margin-bottom: 15px;
+}
+
+
+/* ==============================
+   RESERVATION BUTTON
+============================== */
+
+.reserve-btn {
+    width: 100%;
+
+    border: none;
+
+    background-color: #1b684e;
+
+    color: white;
+
+    padding: 12px;
+
+    border-radius: 22px;
+
+    font-weight: bold;
+
+    transition: background-color 0.2s;
+}
+
+.reserve-btn:hover {
+    background-color: #14523d;
+}
+
+.disabled-btn {
+    background-color: #aaa;
+
+    cursor: not-allowed;
+}
+
+.disabled-btn:hover {
+    background-color: #aaa;
+}
+
+
+/* ==============================
+   NO RESULTS
+============================== */
+
+.no-results {
+    display: none;
+
+    text-align: center;
+
+    color: #777;
+
+    padding: 50px;
+}
+
+
+/* ==============================
+   COMMUNITY SECTION
+============================== */
+
+.community-section {
+    background-color: #eee9dc;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 30px;
+
+    padding: 55px 7%;
+
+    text-align: center;
+}
+
+.community-item {
+    max-width: 240px;
+    margin: auto;
+}
+
+.community-icon {
+    font-size: 30px;
+
+    margin-bottom: 12px;
+}
+
+.community-item h3 {
+    font-size: 16px;
+
+    margin-bottom: 10px;
+}
+
+.community-item p {
+    color: #68716b;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+
+/* ==============================
+   FOOTER
+============================== */
+
+footer {
+    background-color: #153c32;
+
+    color: white;
+
+    display: grid;
+
+    grid-template-columns:
+        2fr 1fr 1fr;
+
+    gap: 50px;
+
+    padding: 45px 8%;
+}
+
+footer h3,
+footer h4 {
+    margin-bottom: 12px;
+}
+
+footer p {
+    color: #c6d1cb;
+
+    max-width: 350px;
+
+    line-height: 1.5;
+
+    font-size: 13px;
+}
+
+footer a {
+    display: block;
+
+    color: #c6d1cb;
+
+    text-decoration: none;
+
+    margin-bottom: 8px;
+
+    font-size: 13px;
+}
+
+footer a:hover {
+    color: white;
+}
+
+
+/* ==============================
+   RESPONSIVE
+============================== */
+
+@media (max-width: 1000px) {
+
+    .navbar nav {
+        display: none;
+    }
+
+    .restaurant-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .community-section {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .navbar {
+        padding: 0 20px;
+    }
+
+    .nav-buttons .sign-in {
+        display: none;
+    }
+
+    .account-btn {
+        padding: 9px 13px;
+
+        font-size: 12px;
+    }
+
+    .hero {
+        min-height: 430px;
+    }
+
+    .hero h2 {
+        font-size: 39px;
+    }
+
+    .hero p {
+        font-size: 15px;
+    }
+
+    .search-box {
+        height: 50px;
+    }
+
+    .search-box button {
+        padding: 11px 17px;
+    }
+
+    .restaurant-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .restaurant-heading {
+        display: block;
+    }
+
+    .restaurant-count {
+        display: block;
+
+        margin-top: 10px;
+    }
+
+    .community-section {
+        grid-template-columns: 1fr;
+    }
+
+    footer {
+        grid-template-columns: 1fr;
+    }
+
+}
