@@ -113,7 +113,7 @@ export default function App() {
                 <h3>{item.name}</h3>
                 <p className="restaurant-type">🍽️ {item.cuisine || 'Authentic Cuisine'}</p>
                 
-                {item.distanceKm && (
+                {item.distanceKm != null && (
                   <p className="details">
                     <span>📍 {item.distanceKm} km away</span>
                   </p>
