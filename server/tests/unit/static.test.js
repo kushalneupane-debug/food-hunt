@@ -14,7 +14,11 @@ beforeAll(() => {
 });
 afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-const app = () => createApp({ repo: createFakeRepo(), staticDir: dir });
+const app = () => createApp({
+  repo: createFakeRepo(),
+  staticDir: dir,
+  jwtSecret: 'food-hunt-static-test-secret',
+});
 
 test('TC-15 serves the frontend at the root URL', async () => {
   const res = await request(app()).get('/');

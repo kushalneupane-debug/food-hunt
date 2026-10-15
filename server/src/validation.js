@@ -42,3 +42,36 @@ const createReview = z.object({
 const idParam = z.coerce.number().int().positive();
 
 module.exports = { CUISINES, VENDOR_TYPES, searchQuery, createBusiness, createReview, idParam };
+
+
+// Authentication validation.
+const authZ = require('zod').z;
+
+const authEmail = authZ.string()
+  .trim()
+  .email()
+  .max(254)
+  .toLowerCase();
+
+const authPassword = authZ.string()
+  .min(8, 'Password must contain at least 8 characters')
+  .refine(
+    (value) => Buffer.byteLength(value, 'utf8') <= 72,
+    'Password must not exceed 72 bytes'
+  );
+
+module.exports.registerUser = authZ.object({
+  name: authZ.string().trim().min(2).max(120),
+  email: authEmail,
+  password: authPassword,
+}).strict();
+
+module.exports.loginUser = authZ.object({
+  email: authEmail,
+  password: authZ.string()
+    .min(1)
+    .refine(
+      (value) => Buffer.byteLength(value, 'utf8') <= 72,
+      'Password must not exceed 72 bytes'
+    ),
+}).strict();
