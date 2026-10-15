@@ -57,7 +57,10 @@ test('IT-03 larger radius reaches Shreveport', async () => {
 });
 
 test('IT-04 create business and review round-trip through the API', async () => {
-  const app = createApp({ repo });
+  const app = createApp({
+  repo,
+  jwtSecret: 'food-hunt-integration-test-secret',
+});
   const created = await request(app).post('/api/businesses').send({
     name: 'IT Momo Cart', cuisine: 'nepali', vendorType: 'food-truck', priceLevel: 1,
     address: '1 Integration Way', isLicensed: true, lat: 33.43, lng: -94.05,

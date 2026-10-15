@@ -1,7 +1,12 @@
 // Unit/API tests: exercise routes + validation against an in-memory repo.
 // Test IDs (TC-xx) map to requirements in docs/test-plan.md.
 const request = require('supertest');
-const { createApp } = require('../../src/app');
+const { createApp: buildApp } = require('../../src/app');
+
+const createApp = (options) => buildApp({
+  ...options,
+  jwtSecret: 'food-hunt-unit-test-secret',
+});
 const { createFakeRepo } = require('./fakeRepo');
 
 const TXK = { lat: 33.4251, lng: -94.0477 };
