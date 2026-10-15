@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -6,15 +7,23 @@ const { businessRoutes } = require('./routes/businesses');
 const { authRoutes } = require('./routes/auth');
 const { CUISINES, VENDOR_TYPES } = require('./validation');
 
-// Inject the repository so tests can use a fake without accessing MySQL.
 function createApp({
   repo,
   corsOrigins = ['http://localhost:5173'],
   jwtSecret = process.env.JWT_SECRET,
+  staticDir = null,
 }) {
   const app = express();
 
-  app.use(helmet());
+  app.use(helmet({
+    // Preserve the HTTP configuration used by the EC2 demo.
+    contentSecurityPolicy: {
+      directives: {
+        upgradeInsecureRequests: null,
+      },
+    },
+  }));
+
   app.use(cors({ origin: corsOrigins }));
   app.use(express.json({ limit: '100kb' }));
 
@@ -37,11 +46,19 @@ function createApp({
   app.use('/api/auth', authRoutes(repo, jwtSecret));
   app.use('/api/businesses', businessRoutes(repo));
 
+  // Serve the built frontend when configured.
+  if (staticDir) {
+    app.use(express.static(staticDir));
+
+    app.get(/^\/(?!api(\/|$)).*/, (req, res) => {
+      res.sendFile(path.join(staticDir, 'index.html'));
+    });
+  }
+
   app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
   });
 
-  // Central error handler.
   app.use((err, req, res, next) => {
     if (err.type === 'entity.parse.failed') {
       return res.status(400).json({ error: 'Malformed JSON body' });

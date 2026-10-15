@@ -20,15 +20,20 @@ const corsOrigins = (
   .map((origin) => origin.trim());
 
 const port = Number(process.env.PORT || 4000);
+const staticDir = process.env.STATIC_DIR || null;
 
 const app = createApp({
   repo,
   corsOrigins,
   jwtSecret,
+  staticDir,
 });
 
 const server = app.listen(port, () => {
-  console.log(`Food Hunt API listening on http://localhost:${port}`);
+  const frontendMessage = staticDir ? ' (serving frontend)' : '';
+  console.log(
+    `Food Hunt listening on http://localhost:${port}${frontendMessage}`
+  );
 });
 
 function shutdown() {

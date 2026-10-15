@@ -40,16 +40,24 @@ jobs:
       - run: npm test
       - run: npm run test:integration
 
-  # Uncomment once the frontend lives in client/
-  # client:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: client
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with: { node-version: 22 }
-  #     - run: npm ci
-  #     - run: npm test -- --run
-  #     - run: npm run build
+  client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  # Proves the production image (React build + API) still builds
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t food-hunt .
