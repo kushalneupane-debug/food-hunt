@@ -12,13 +12,12 @@ export default function App() {
   const DEFAULT_LAT = 33.4251;
   const DEFAULT_LNG = -94.0477;
 
+  // Execute database search via backend API
   const handleSearch = (lat = DEFAULT_LAT, lng = DEFAULT_LNG) => {
     setLoading(true);
     setError(null);
-    
     searchNearby({ lat, lng, q: query })
       .then((data) => {
-        // Handles array directly or nested data.businesses
         const list = Array.isArray(data) ? data : (data.results || []);
         setResults(list);
       })
@@ -26,6 +25,7 @@ export default function App() {
       .finally(() => setLoading(false));
   };
 
+  // Browser Geolocation with Texarkana fallback
   const handleUseLocation = () => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -39,7 +39,7 @@ export default function App() {
 
   return (
     <div>
-      {/* Header */}
+      {/* Navigation Bar */}
       <header className="navbar">
         <div className="logo">
           <div className="logo-icon">🍲</div>
@@ -68,14 +68,14 @@ export default function App() {
             <span className="search-icon">⌕</span>
             <input
               type="text"
-              placeholder="Search dish or restaurant (e.g. momo, birria)..."
+              placeholder="Search restaurant or dish (e.g., momo, birria)..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
             <button onClick={() => handleSearch()}>Search</button>
             <button 
-              onClick={handleUseLocation}
+              onClick={handleUseLocation} 
               style={{ marginLeft: '8px', backgroundColor: '#14523d' }}
             >
               📍 Location
@@ -84,7 +84,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Restaurant Results Grid */}
+      {/* Restaurant Section */}
       <section className="section restaurants-section" id="restaurants">
         <div className="section-heading restaurant-heading">
           <div>
@@ -96,35 +96,31 @@ export default function App() {
           </span>
         </div>
 
-        {loading && <p style={{ textAlign: 'center', padding: '20px' }}>Searching database...</p>}
-        {error && <p style={{ color: 'red', textAlign: 'center', padding: '20px' }}>Error: {error}</p>}
+        {loading && <p style={{ padding: '20px', textAlign: 'center' }}>Loading results from database...</p>}
+        {error && <p style={{ color: 'red', padding: '20px' }}>Error: {error}</p>}
 
+        {/* Dynamic Restaurant Cards Grid */}
         <div className="restaurant-grid">
           {results.map((item, i) => (
             <article className="restaurant-card" key={i}>
               <div className="image-placeholder">
-                {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.name} />
-                ) : (
-                  <span>{item.name}</span>
-                )}
+                <span>{item.name}</span>
               </div>
               <div className="restaurant-info">
                 <h3>{item.name}</h3>
-                <p className="restaurant-type">🍽️ {item.cuisine || 'Authentic Cuisine'}</p>
-                
+                <p className="restaurant-type">🍽️ {item.cuisine || 'Cuisine N/A'}</p>
+                <div className="details">
+                  <span>⭐ {item.rating || '4.5'}</span>
+                </div>
+                <p className="address">📍 {item.address || 'Texarkana, TX'}</p>
                 {item.distanceKm && (
-                  <p className="details">
-                    <span>📍 {item.distanceKm} km away</span>
-                  </p>
+                  <p className="description">Distance: {item.distanceKm} km</p>
                 )}
-
-                {item.matchedDishes && item.matchedDishes.length > 0 && (
+                {item.matchedDishes && (
                   <p className="description">
-                    <strong>Matched Dishes:</strong> {item.matchedDishes.join(', ')}
+                    <strong>Dishes:</strong> {item.matchedDishes.join(', ')}
                   </p>
                 )}
-
                 <button className="reserve-btn">Reserve a Table</button>
               </div>
             </article>
@@ -132,7 +128,7 @@ export default function App() {
         </div>
 
         {results.length === 0 && !loading && (
-          <p className="no-results" style={{ display: 'block', textAlign: 'center', marginTop: '30px' }}>
+          <p className="no-results" style={{ display: 'block' }}>
             No restaurants found. Try searching for "momo" or "birria".
           </p>
         )}
