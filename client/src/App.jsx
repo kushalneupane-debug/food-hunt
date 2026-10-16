@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { searchNearby } from './api';
 import './App.css';
 
@@ -7,6 +7,10 @@ export default function App() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    handleSearch();
+  }, []);
 
   // Default Texarkana coordinates
   const DEFAULT_LAT = 33.4251;
@@ -43,8 +47,8 @@ export default function App() {
       <header className="navbar">
         <div className="logo">
           <div className="logo-icon">🍲</div>
-          <div>
-            <h1>The Creators</h1>
+          <div className="logo-text">
+            <h1>Food Hunt</h1>
             <p>Real Food. Real Cultures.</p>
           </div>
         </div>
@@ -108,7 +112,11 @@ export default function App() {
               </div>
               <div className="restaurant-info">
                 <h3>{item.name}</h3>
-                <p className="restaurant-type">🍽️ {item.cuisine || 'Cuisine N/A'}</p>
+                <p className="restaurant-type">
+                  🍽️ {item.cuisine
+                    ? item.cuisine.replace(/\b\w/g, (char) => char.toUpperCase())
+                    : 'Cuisine N/A'}
+                </p>
                 <div className="details">
                   <span>⭐ {item.rating || '4.5'}</span>
                 </div>
@@ -121,7 +129,7 @@ export default function App() {
                     <strong>Dishes:</strong> {item.matchedDishes.join(', ')}
                   </p>
                 )}
-                <button className="reserve-btn">Reserve a Table</button>
+                
               </div>
             </article>
           ))}
