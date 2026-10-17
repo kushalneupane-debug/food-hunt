@@ -1,142 +1,273 @@
-import { useState } from 'react';
-import { searchNearby } from './api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getMe, searchNearby } from './api';
+import { FEATURED_CUISINES, KM_PER_MILE, cuisineName } from './format';
+import Hero from './components/Hero';
+import CategoryTabs from './components/CategoryTabs';
+import MenuBoard from './components/MenuBoard';
+import PlaceDrawer from './components/PlaceDrawer';
+import AuthDialog from './components/AuthDialog';
 import './App.css';
+
+const TEXARKANA = { lat: 33.4251, lng: -94.0477, label: 'Texarkana' };
+const TOKEN_KEY = 'foodhunt.token';
+
+// Browser storage can be blocked (private mode), so never let it crash the app.
+const storage = {
+  get: () => {
+    try {
+      return localStorage.getItem(TOKEN_KEY);
+    } catch {
+      return null;
+    }
+  },
+  set: (v) => {
+    try {
+      if (v) localStorage.setItem(TOKEN_KEY, v);
+      else localStorage.removeItem(TOKEN_KEY);
+    } catch {
+      /* ignore */
+    }
+  },
+};
 
 export default function App() {
   const [query, setQuery] = useState('');
+  const [radiusMiles, setRadiusMiles] = useState(15);
+  const [place, setPlace] = useState(TEXARKANA);
+  const [locationNote, setLocationNote] = useState('');
+  const [locating, setLocating] = useState(false);
+
   const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [status, setStatus] = useState('loading'); // loading | ready | error
+  const [error, setError] = useState('');
 
-  // Default Texarkana coordinates
-  const DEFAULT_LAT = 33.4251;
-  const DEFAULT_LNG = -94.0477;
+  const [category, setCategory] = useState('all');
+  const [otherCuisine, setOtherCuisine] = useState(null);
+  const [openId, setOpenId] = useState(null);
 
-  const handleSearch = (lat = DEFAULT_LAT, lng = DEFAULT_LNG) => {
-    setLoading(true);
-    setError(null);
-    
-    searchNearby({ lat, lng, q: query })
-      .then((data) => {
-        // Handles array directly or nested data.businesses
-        const list = Array.isArray(data) ? data : (data.results || []);
-        setResults(list);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  };
+  const [session, setSession] = useState({ token: storage.get(), user: null });
+  const [authMode, setAuthMode] = useState(null); // null | 'login' | 'register'
 
-  const handleUseLocation = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => handleSearch(pos.coords.latitude, pos.coords.longitude),
-        () => handleSearch(DEFAULT_LAT, DEFAULT_LNG)
-      );
-    } else {
-      handleSearch(DEFAULT_LAT, DEFAULT_LNG);
+  const runSearch = useCallback(
+    async (q) => {
+      setStatus('loading');
+      try {
+        const data = await searchNearby({
+          lat: place.lat,
+          lng: place.lng,
+          q: q.trim(),
+          radiusKm: Math.min(100, Math.round(radiusMiles * KM_PER_MILE)),
+        });
+        setResults(data.results || []);
+        setStatus('ready');
+      } catch (err) {
+        setError(err.message);
+        setStatus('error');
+      }
+    },
+    [place, radiusMiles]
+  );
+
+  // Search as you type (after a short pause), and whenever distance or location changes.
+  useEffect(() => {
+    const t = setTimeout(() => runSearch(query), 300);
+    return () => clearTimeout(t);
+  }, [query, runSearch]);
+
+  // Restore a saved login.
+  useEffect(() => {
+    if (!session.token || session.user) return;
+    getMe(session.token)
+      .then(({ user }) => setSession((s) => ({ ...s, user })))
+      .catch(() => {
+        storage.set(null);
+        setSession({ token: null, user: null });
+      });
+  }, [session.token, session.user]);
+
+  function useMyLocation() {
+    if (!('geolocation' in navigator)) {
+      setLocationNote('This browser can’t share location, so we’re showing Texarkana.');
+      return;
     }
-  };
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setPlace({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'you' });
+        setLocationNote('');
+        setLocating(false);
+      },
+      () => {
+        setLocationNote(
+          window.isSecureContext
+            ? 'Location is turned off for this site, so we’re showing Texarkana.'
+            : 'Browsers only share location over a secure (https) connection, so we’re showing Texarkana.'
+        );
+        setPlace(TEXARKANA);
+        setLocating(false);
+      },
+      { timeout: 8000 }
+    );
+  }
+
+  const counts = useMemo(() => {
+    const byCuisine = {};
+    for (const r of results) byCuisine[r.cuisine] = (byCuisine[r.cuisine] || 0) + 1;
+    const featured = FEATURED_CUISINES.reduce((n, c) => n + (byCuisine[c] || 0), 0);
+    return { all: results.length, other: results.length - featured, byCuisine };
+  }, [results]);
+
+  const visible = useMemo(() => {
+    if (category === 'all') return results;
+    if (category === 'other') {
+      return results.filter((r) =>
+        otherCuisine ? r.cuisine === otherCuisine : !FEATURED_CUISINES.includes(r.cuisine)
+      );
+    }
+    return results.filter((r) => r.cuisine === category);
+  }, [results, category, otherCuisine]);
+
+  function signedIn({ token, user }) {
+    storage.set(token);
+    setSession({ token, user });
+    setAuthMode(null);
+  }
+
+  function signOut() {
+    storage.set(null);
+    setSession({ token: null, user: null });
+  }
+
+  const noun = visible.length === 1 ? 'place' : 'places';
+  const scopeName =
+    category === 'all'
+      ? noun
+      : category === 'other'
+        ? otherCuisine
+          ? `${cuisineName(otherCuisine)} ${noun}`
+          : `${noun} in other cuisines`
+        : `${cuisineName(category)} ${noun}`;
+  const scopeCuisine =
+    category === 'other' ? (otherCuisine ? cuisineName(otherCuisine) : 'other cuisines') : cuisineName(category);
 
   return (
-    <div>
-      {/* Header */}
-      <header className="navbar">
-        <div className="logo">
-          <div className="logo-icon">🍲</div>
-          <div>
-            <h1>The Creators</h1>
-            <p>Real Food. Real Cultures.</p>
-          </div>
-        </div>
-        <nav>
-          <a href="#" className="active">Home</a>
-          <a href="#restaurants">Restaurants</a>
-          <a href="#about">About</a>
-        </nav>
-        <div className="nav-buttons">
-          <button className="sign-in">♙ &nbsp; Sign In</button>
-          <button className="account-btn">Create Account</button>
+    <div className="page">
+      <header className="topbar">
+        <a className="brand" href="/" aria-label="Food Hunt home">
+          <svg className="brand__mark" viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M8 28h48a24 24 0 0 1-48 0z" fill="currentColor" />
+            <path d="M22 20c0-4 4-4 4-8M32 20c0-4 4-4 4-8M42 20c0-4 4-4 4-8" stroke="var(--chili)" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+          </svg>
+          Food Hunt
+        </a>
+        <div className="topbar__account">
+          {session.user ? (
+            <>
+              <span className="topbar__hello">Hi, {session.user.name.split(' ')[0]}</span>
+              <button className="btn btn--ghost" onClick={signOut}>
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn btn--ghost" onClick={() => setAuthMode('login')}>
+                Sign in
+              </button>
+              <button className="btn btn--lantern" onClick={() => setAuthMode('register')}>
+                Create account
+              </button>
+            </>
+          )}
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="hero-content">
-          <h2>Discover Authentic<br />Food Near You</h2>
-          <p>Find local restaurants serving traditional dishes and authentic food from different cultures.</p>
-          <div className="search-box">
-            <span className="search-icon">⌕</span>
-            <input
-              type="text"
-              placeholder="Search dish or restaurant (e.g. momo, birria)..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <button onClick={() => handleSearch()}>Search</button>
-            <button 
-              onClick={handleUseLocation}
-              style={{ marginLeft: '8px', backgroundColor: '#14523d' }}
-            >
-              📍 Location
-            </button>
+      <main>
+        <Hero
+          query={query}
+          onQueryChange={setQuery}
+          onSubmit={() => runSearch(query)}
+          locationLabel={place.label}
+          locationNote={locationNote}
+          onUseLocation={useMyLocation}
+          locating={locating}
+          radiusMiles={radiusMiles}
+          onRadiusChange={setRadiusMiles}
+        />
+
+        <section className="results" aria-labelledby="results-title" aria-busy={status === 'loading'}>
+          <div className="results__head">
+            <h2 id="results-title">
+              {status === 'error'
+                ? 'Search isn’t working right now'
+                : query.trim()
+                  ? `${visible.length} ${scopeName} serving “${query.trim()}”`
+                  : `${visible.length} ${scopeName} near ${place.label}`}
+            </h2>
+            <p className="muted">Nearest first. Tap a place for its menu and reviews.</p>
           </div>
-        </div>
-      </section>
 
-      {/* Restaurant Results Grid */}
-      <section className="section restaurants-section" id="restaurants">
-        <div className="section-heading restaurant-heading">
-          <div>
-            <h2>Local Restaurants</h2>
-            <p>Explore authentic food and local restaurants in the Texarkana area.</p>
-          </div>
-          <span className="restaurant-count">
-            {results.length} Restaurants Found
-          </span>
-        </div>
+          <CategoryTabs
+            category={category}
+            onCategoryChange={(c) => {
+              setCategory(c);
+              setOtherCuisine(null);
+            }}
+            otherCuisine={otherCuisine}
+            onOtherCuisineChange={setOtherCuisine}
+            counts={counts}
+          />
 
-        {loading && <p style={{ textAlign: 'center', padding: '20px' }}>Searching database...</p>}
-        {error && <p style={{ color: 'red', textAlign: 'center', padding: '20px' }}>Error: {error}</p>}
+          {status === 'error' && (
+            <div className="empty">
+              <p>{error}. Check your connection and try again.</p>
+              <button className="btn btn--primary" onClick={() => runSearch(query)}>
+                Try again
+              </button>
+            </div>
+          )}
 
-        <div className="restaurant-grid">
-          {results.map((item, i) => (
-            <article className="restaurant-card" key={i}>
-              <div className="image-placeholder">
-                {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.name} />
-                ) : (
-                  <span>{item.name}</span>
+          {status !== 'error' && visible.length > 0 && <MenuBoard places={visible} onOpen={setOpenId} />}
+
+          {status === 'ready' && visible.length === 0 && (
+            <div className="empty">
+              <p>
+                Nothing {category === 'all' ? '' : `in ${scopeCuisine} `}
+                {query.trim() ? `serves “${query.trim()}” ` : ''}within {radiusMiles} miles yet.
+              </p>
+              <div className="empty__actions">
+                {radiusMiles < 60 && (
+                  <button className="btn btn--primary" onClick={() => setRadiusMiles(60)}>
+                    Search 60 miles
+                  </button>
+                )}
+                {category !== 'all' && (
+                  <button className="btn btn--ghost-dark" onClick={() => setCategory('all')}>
+                    Show all cuisines
+                  </button>
+                )}
+                {query && (
+                  <button className="btn btn--ghost-dark" onClick={() => setQuery('')}>
+                    Clear search
+                  </button>
                 )}
               </div>
-              <div className="restaurant-info">
-                <h3>{item.name}</h3>
-                <p className="restaurant-type">🍽️ {item.cuisine || 'Authentic Cuisine'}</p>
-                
-                {item.distanceKm != null && (
-                  <p className="details">
-                    <span>📍 {item.distanceKm} km away</span>
-                  </p>
-                )}
+            </div>
+          )}
+        </section>
+      </main>
 
-                {item.matchedDishes && item.matchedDishes.length > 0 && (
-                  <p className="description">
-                    <strong>Matched Dishes:</strong> {item.matchedDishes.join(', ')}
-                  </p>
-                )}
+      <footer className="footer">
+        <p>
+          <strong>Food Hunt</strong> helps small, family-run food businesses get found. Built by The Creators at
+          Texas A&amp;M University-Texarkana.
+        </p>
+        <p className="muted">Only licensed food vendors are listed.</p>
+      </footer>
 
-                <button className="reserve-btn">Reserve a Table</button>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {results.length === 0 && !loading && (
-          <p className="no-results" style={{ display: 'block', textAlign: 'center', marginTop: '30px' }}>
-            No restaurants found. Try searching for "momo" or "birria".
-          </p>
-        )}
-      </section>
+      {openId && <PlaceDrawer key={openId} id={openId} onClose={() => setOpenId(null)} userName={session.user?.name} />}
+      {authMode && (
+        <AuthDialog mode={authMode} onModeChange={setAuthMode} onClose={() => setAuthMode(null)} onSignedIn={signedIn} />
+      )}
     </div>
   );
 }
