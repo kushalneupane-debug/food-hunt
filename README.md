@@ -38,6 +38,12 @@ cd client && npm install && npm run dev   # http://localhost:5173
 ```
 Build against `docs/api.md`. The API already allows `http://localhost:5173` through CORS.
 
+## Project documents
+- [Requirements (SRS)](docs/requirements.md): user stories, acceptance criteria, non-functional requirements
+- [System design](docs/design.md): architecture, use cases, ER diagram, sequence diagrams
+- [Test plan](docs/test-plan.md): test strategy and requirement-to-test traceability
+- [API contract](docs/api.md) · [Authentication](docs/auth.md) · [AWS deployment](docs/deploy-aws.md)
+
 ## Deploy to AWS EC2
 See [docs/deploy-aws.md](docs/deploy-aws.md). The short version: launch an Ubuntu 24.04 instance with HTTP open, then run
 `curl -fsSL https://raw.githubusercontent.com/kushalneupane-debug/food-hunt/main/deploy/ec2-setup.sh | bash`.
