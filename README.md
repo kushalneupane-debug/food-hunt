@@ -38,6 +38,10 @@ cd client && npm install && npm run dev   # http://localhost:5173
 ```
 Build against `docs/api.md`. The API already allows `http://localhost:5173` through CORS.
 
+## Deploy to AWS EC2
+See [docs/deploy-aws.md](docs/deploy-aws.md). The short version: launch an Ubuntu 24.04 instance with HTTP open, then run
+`curl -fsSL https://raw.githubusercontent.com/kushalneupane-debug/food-hunt/main/deploy/ec2-setup.sh | bash`.
+
 ## Team workflow
 - `main` is protected: no direct pushes. Use a branch per task (`feature/search-api`) and open a pull request.
 - Every PR needs one teammate's review and green CI before merging.

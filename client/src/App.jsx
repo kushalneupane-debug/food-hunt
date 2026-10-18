@@ -285,7 +285,7 @@ export default function App() {
                   </p>
                 )}
 
-                {item.matchedDishes && (
+                {item.matchedDishes?.length > 0 && (
                   <p className="description">
                     <strong>Dishes:</strong> {item.matchedDishes.join(', ')}
                   </p>

@@ -1,0 +1,53 @@
+# Production stack for AWS EC2.
+# Run from the repository root:
+# docker compose -f docker-compose.prod.yml up -d --build
+#
+# The root .env must define:
+# MYSQL_ROOT_PASSWORD, MYSQL_PASSWORD, and JWT_SECRET.
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: ["--performance-schema=OFF"]
+
+    env_file: .env
+
+    environment:
+      MYSQL_DATABASE: foodhunt
+      MYSQL_USER: foodhunt
+
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./server/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./server/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  app:
+    build: .
+    restart: unless-stopped
+
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: foodhunt
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: foodhunt
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the root .env}
+
+    ports:
+      - "80:4000"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  dbdata:
