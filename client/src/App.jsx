@@ -429,10 +429,16 @@ export default function App() {
           <p className="footer__brand">Food Hunt</p>
           <p>
             We help small, family-run food businesses in Texarkana get found: kitchens, trucks, cafés,
-            bakeries and international markets. Only licensed vendors are listed.
+            bakeries and international markets. Chains and gas stations are left out.
           </p>
         </div>
-        <p className="muted">Built by The Creators at Texas A&amp;M University-Texarkana.</p>
+        <p className="muted">
+          Built by The Creators at Texas A&amp;M University-Texarkana. Place data ©{' '}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+            OpenStreetMap contributors
+          </a>
+          .
+        </p>
       </footer>
 
       {openId && <PlaceDrawer key={openId} id={openId} onClose={() => setOpenId(null)} userName={session?.user?.name} />}

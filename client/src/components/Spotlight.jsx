@@ -15,6 +15,11 @@ export default function Spotlight({ craving, nearest, topRated, onOpen, onFocus 
         </span>
         <div>
           <h2 id="spot-title">{name}</h2>
+          {!nearest.matchedDishes?.length && (
+            <p className="spot__dishes">
+              {placeKind(nearest).label} spot. Menu not added yet, so call ahead to check.
+            </p>
+          )}
           {nearest.matchedDishes?.length > 0 && (
             <p className="spot__dishes">
               Order the{' '}

@@ -24,6 +24,21 @@ async function runMigrations(pool) {
     await pool.query('ALTER TABLE phone_signup_verifications ADD COLUMN provider_sid VARCHAR(34) NULL');
   }
   await addCategoryColumns(pool);
+  await addSourceColumns(pool);
+}
+
+// Where a listing came from (owner, osm = OpenStreetMap import), and its OSM id for re-imports.
+async function addSourceColumns(pool) {
+  const [cols] = await pool.query(
+    "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'businesses'"
+  );
+  const has = (name) => cols.some(c => c.COLUMN_NAME === name);
+  if (!has('source')) {
+    await pool.query("ALTER TABLE businesses ADD COLUMN source VARCHAR(20) NOT NULL DEFAULT 'owner' AFTER is_licensed");
+  }
+  if (!has('osm_id')) {
+    await pool.query('ALTER TABLE businesses ADD COLUMN osm_id VARCHAR(30) NULL UNIQUE AFTER source');
+  }
 }
 
 // Categories: eat / drink / sweets / shop, plus a free-text subcategory (coffee, bakery, grocery…).
@@ -103,8 +118,12 @@ async function main() {
   try {
     await runMigrations(pool);
     console.log('Email and phone signup tables are ready. Existing data preserved.');
-    const added = await seedSamplePlaces(pool);
-    console.log(`Category sample places: ${added} added.`);
+    // Demo places only until real places are imported (db/import-places.js).
+    const [[{ n }]] = await pool.query('SELECT COUNT(*) AS n FROM businesses WHERE osm_id IS NOT NULL');
+    if (Number(n) === 0) {
+      const added = await seedSamplePlaces(pool);
+      console.log(`Category sample places: ${added} added.`);
+    }
   } finally {
     await pool.end();
   }

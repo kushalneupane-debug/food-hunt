@@ -143,7 +143,7 @@ export default function PlaceDrawer({ id, onClose, userName }) {
             <section className="drawer__block">
               <h3>{place.category === 'shop' ? 'What they sell' : 'Menu'}</h3>
               {place.dishes.length === 0 ? (
-                <p className="muted">Nothing listed yet.</p>
+                <p className="muted">Menu not added yet. Been here? Tell people what to order in a review.</p>
               ) : (
                 <ul className="menu">
                   {place.dishes.map((d) => (
