@@ -3,6 +3,8 @@ require('dotenv').config();
 const { createApp } = require('./app');
 const { createPool } = require('./db');
 const { createRepository } = require('./repository');
+const { createMailer } = require('./mailer');
+const { createSmsSender } = require('./sms');
 
 const jwtSecret = process.env.JWT_SECRET;
 
@@ -27,6 +29,8 @@ const app = createApp({
   corsOrigins,
   jwtSecret,
   staticDir,
+  mailer: createMailer(),
+  sms: createSmsSender(),
 });
 
 const server = app.listen(port, () => {

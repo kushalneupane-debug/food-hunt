@@ -1,5 +1,6 @@
 const request = require('supertest');
 const bcrypt = require('bcrypt');
+const { createSignupRepo } = require('./signupRepo');
 const { createApp: buildApp } = require('../../src/app');
 
 const createApp = (options) => buildApp({
@@ -13,6 +14,7 @@ describe('Authentication API', () => {
   let app;
   let users;
   let repo;
+  let outbox;
 
   const account = {
     name: 'Test Explorer',
@@ -21,38 +23,20 @@ describe('Authentication API', () => {
   };
 
   beforeEach(() => {
-    users = [];
-
-    repo = {
-      async findUserByEmail(email) {
-        return users.find((user) => user.email === email) ?? null;
-      },
-
-      async findUserById(id) {
-        return users.find((user) => user.id === id) ?? null;
-      },
-
-      async createUser({ name, email, passwordHash }) {
-        const user = {
-          id: users.length + 1,
-          name,
-          email,
-          passwordHash,
-          role: 'explorer',
-        };
-
-        users.push(user);
-        return user.id;
-      },
-    };
-
-    app = createApp({ repo, jwtSecret });
+    repo = createSignupRepo();
+    users = repo.users;
+    outbox = [];
+    app = createApp({ repo, jwtSecret, mailer: { sendSignupCode: async message => outbox.push(message) } });
   });
 
   async function register() {
-    return request(app)
-      .post('/api/auth/register')
-      .send(account);
+    const sent = await request(app).post('/api/auth/signup/request-code')
+      .send({ name: account.name, email: account.email });
+    if (sent.status !== 202) return sent;
+    const verified = await request(app).post('/api/auth/signup/verify-code')
+      .send({ email: account.email, code: outbox.at(-1).code });
+    return request(app).post('/api/auth/register')
+      .send({ email: account.email, password: account.password, verificationToken: verified.body.verificationToken });
   }
 
   async function login(password = account.password) {

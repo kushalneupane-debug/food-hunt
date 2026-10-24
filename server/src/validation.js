@@ -60,18 +60,24 @@ const authPassword = authZ.string()
     'Password must not exceed 72 bytes'
   );
 
-module.exports.registerUser = authZ.object({
-  name: authZ.string().trim().min(2).max(120),
-  email: authEmail,
-  password: authPassword,
-}).strict();
+// Normalize formatting without guessing a country code. Store E.164-style +digits.
+const authPhone = authZ.string().trim().max(40)
+  .regex(/^\+[0-9 ()-]+$/)
+  .transform(value => value.replace(/[ ()-]/g, ''))
+  .pipe(authZ.string().regex(/^\+[1-9]\d{7,14}$/));
 
-module.exports.loginUser = authZ.object({
-  email: authEmail,
-  password: authZ.string()
-    .min(1)
-    .refine(
-      (value) => Buffer.byteLength(value, 'utf8') <= 72,
-      'Password must not exceed 72 bytes'
-    ),
-}).strict();
+const contactSchema = (fields) => authZ.union([
+  authZ.object({ email: authEmail, ...fields }).strict(),
+  authZ.object({ phone: authPhone, ...fields }).strict(),
+]);
+
+module.exports.requestSignupCode = contactSchema({ name: authZ.string().trim().min(2).max(120) });
+module.exports.verifySignupCode = contactSchema({ code: authZ.string().regex(/^\d{6}$/) });
+module.exports.registerUser = contactSchema({
+  password: authPassword,
+  verificationToken: authZ.string().regex(/^[a-f0-9]{64}$/),
+});
+module.exports.loginUser = contactSchema({
+  password: authZ.string().min(1).refine(value => Buffer.byteLength(value, 'utf8') <= 72,
+    'Password must not exceed 72 bytes'),
+});

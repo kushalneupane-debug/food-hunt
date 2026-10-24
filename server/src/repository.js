@@ -5,8 +5,23 @@
 
 const pointWkt = (lat, lng) => `POINT(${Number(lng)} ${Number(lat)})`;
 
+const { createContactVerification } = require('./contact-verification-repository');
+
 function createRepository(pool) {
+  const emailVerification = createContactVerification(pool, 'email');
+  const phoneVerification = createContactVerification(pool, 'phone');
   return {
+    reserveSignupCode({ email, ...details }) { return emailVerification.reserveCode({ contact: email, ...details }); },
+    invalidateSignupCode(email, codeHash) { return emailVerification.invalidateCode(email, codeHash); },
+    verifySignupCode({ email, ...details }) { return emailVerification.verifyCode({ contact: email, ...details }); },
+    createVerifiedUser({ email, ...details }) { return emailVerification.createUser({ contact: email, ...details }); },
+
+    reservePhoneSignupCode({ phone, ...details }) { return phoneVerification.reserveCode({ contact: phone, ...details }); },
+    invalidatePhoneSignupCode(phone, codeHash) { return phoneVerification.invalidateCode(phone, codeHash); },
+    activatePhoneSignupCode(phone, codeHash, providerSid, now) { return phoneVerification.activateProvider(phone, codeHash, providerSid, now); },
+    verifyPhoneSignupCode({ phone, ...details }) { return phoneVerification.verifyCode({ contact: phone, ...details }); },
+    createPhoneVerifiedUser({ phone, ...details }) { return phoneVerification.createUser({ contact: phone, ...details }); },
+
     async createUser({ name, email, passwordHash }) {
       const [result] = await pool.query(
         `INSERT INTO users (name, email, password_hash, role)
@@ -30,9 +45,16 @@ function createRepository(pool) {
       return rows[0] ?? null;
     },
 
+    async findUserByPhone(phone) {
+      const [rows] = await pool.query(
+        'SELECT id, name, email, phone, password_hash AS passwordHash, role FROM users WHERE phone = ? LIMIT 1', [phone]
+      );
+      return rows[0] ?? null;
+    },
+
     async findUserById(id) {
       const [rows] = await pool.query(
-        `SELECT id, name, email, role, created_at AS createdAt
+        `SELECT id, name, email, phone, role, created_at AS createdAt
            FROM users
           WHERE id = ?
           LIMIT 1`,

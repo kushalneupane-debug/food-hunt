@@ -28,6 +28,7 @@ beforeAll(async () => {
   }
   await conn.end();
   pool = createPool();
+  await require('../../db/migrate').runMigrations(pool);
   repo = createRepository(pool);
 });
 
@@ -75,4 +76,101 @@ test('IT-04 create business and review round-trip through the API', async () => 
   expect(detail.body.reviews).toHaveLength(1);
   expect(detail.body.lat).toBeCloseTo(33.43, 4);
   expect(detail.body.lng).toBeCloseTo(-94.05, 4);
+});
+
+test('IT-05 verification locks attempts and creates an account only once under concurrency', async () => {
+  const email = `otp-${require('crypto').randomUUID()}@example.com`;
+  const now = Date.now();
+  const first = '1'.repeat(64), second = '2'.repeat(64), grant = '3'.repeat(64);
+  const reserve = (hash, timestamp) => repo.reserveSignupCode({name:'Verified Explorer',email,codeHash:hash,now:timestamp,expiresAt:timestamp+600000});
+  try {
+    expect((await reserve(first,now)).status).toBe('ready');
+    expect((await reserve(second,now)).status).toBe('limited');
+    for (let i=0;i<5;i++) {
+      const result = await repo.verifySignupCode({email,codeHash:second,tokenHash:grant,now:now+1,verifiedUntil:now+600001});
+      expect(result.status).toBe(i===4?'locked':'invalid');
+    }
+    expect((await repo.verifySignupCode({email,codeHash:first,tokenHash:grant,now:now+2,verifiedUntil:now+600002})).status).toBe('locked');
+    expect((await reserve(second,now+60000)).status).toBe('ready');
+    expect((await repo.verifySignupCode({email,codeHash:first,tokenHash:grant,now:now+60001,verifiedUntil:now+660001})).status).toBe('invalid');
+    expect((await repo.verifySignupCode({email,codeHash:second,tokenHash:grant,now:now+60002,verifiedUntil:now+660002})).status).toBe('verified');
+    expect((await repo.verifySignupCode({email,codeHash:second,tokenHash:grant,now:now+60003,verifiedUntil:now+660003})).status).toBe('invalid');
+    expect(await repo.createVerifiedUser({email,passwordHash:'test-only-hash',tokenHash:first,now:now+60004})).toBe(null);
+    const results = await Promise.all([1,2].map(()=>repo.createVerifiedUser({email,passwordHash:'test-only-hash',tokenHash:grant,now:now+60005})));
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(results.find(Boolean).name).toBe('Verified Explorer');
+    const [rows] = await pool.query('SELECT COUNT(*) AS total FROM users WHERE email = ?', [email]);
+    expect(Number(rows[0].total)).toBe(1);
+  } finally {
+    await pool.query('DELETE FROM users WHERE email = ?', [email]);
+    await pool.query('DELETE FROM signup_verifications WHERE email = ?', [email]);
+  }
+});
+
+test('IT-06 verification expiry, grant expiry, delivery invalidation, and hourly send cap', async () => {
+  const email = `expiry-${require('crypto').randomUUID()}@example.com`;
+  const now=Date.now(), hash='4'.repeat(64), grant='5'.repeat(64);
+  const reserve=t=>repo.reserveSignupCode({name:'Expiry Explorer',email,codeHash:hash,now:t,expiresAt:t+600000});
+  try {
+    await reserve(now);
+    expect((await repo.verifySignupCode({email,codeHash:hash,tokenHash:grant,now:now+600000,verifiedUntil:now+1200000})).status).toBe('invalid');
+    await reserve(now+600001);
+    expect((await repo.verifySignupCode({email,codeHash:hash,tokenHash:grant,now:now+600002,verifiedUntil:now+1200002})).status).toBe('verified');
+    expect(await repo.createVerifiedUser({email,passwordHash:'test-only',tokenHash:grant,now:now+1200002})).toBe(null);
+    await reserve(now+1200003);
+    await repo.invalidateSignupCode(email,hash);
+    expect((await repo.verifySignupCode({email,codeHash:hash,tokenHash:grant,now:now+1200004,verifiedUntil:now+1800004})).status).toBe('invalid');
+    await reserve(now+1260003);await reserve(now+1320003);
+    expect((await reserve(now+1380003)).status).toBe('limited');
+  } finally { await pool.query('DELETE FROM signup_verifications WHERE email = ?', [email]); }
+});
+
+
+test('IT-07 phone signup grants are atomic and migration preserves existing email accounts', async () => {
+  const { randomUUID, randomInt } = require('crypto');
+  const phone = `+1999${randomInt(1000000, 9999999)}`;
+  const email = `phone-migration-${randomUUID()}@example.com`;
+  const now = Date.now(), codeHash = '6'.repeat(64), tokenHash = '7'.repeat(64);
+  try {
+    const emailId = await repo.createUser({ name: 'Existing Email Explorer', email, passwordHash: 'test-only' });
+    await require('../../db/migrate').runMigrations(pool);
+    await require('../../db/migrate').runMigrations(pool);
+    expect((await repo.findUserById(emailId)).email).toBe(email);
+    expect((await repo.reservePhoneSignupCode({ name: 'Phone Explorer', phone, codeHash, now, expiresAt: now + 600000 })).status).toBe('ready');
+    const providerSid = `VE${'8'.repeat(32)}`;
+    expect(await repo.activatePhoneSignupCode(phone, codeHash, providerSid, now)).toBe(true);
+    expect((await repo.verifyPhoneSignupCode({ phone, codeHash, tokenHash, now: now + 1, verifiedUntil: now + 600001, checkCode: async sid => sid === providerSid })).status).toBe('verified');
+    const results = await Promise.all([1, 2].map(() => repo.createPhoneVerifiedUser({ phone, passwordHash: 'test-only', tokenHash, now: now + 2 })));
+    expect(results.filter(Boolean)).toHaveLength(1);
+    const user = await repo.findUserByPhone(phone);
+    expect(user.email).toBe(null); expect(user.phone).toBe(phone);
+    expect((await repo.findUserById(user.id)).phone).toBe(phone);
+    const [rows] = await pool.query('SELECT * FROM phone_signup_verifications WHERE phone = ?', [phone]);
+    expect(rows).toHaveLength(0);
+    // Multiple phone accounts can have NULL email, while phone uniqueness is enforced.
+    const other = phone + '0';
+    await pool.query("INSERT INTO users (name, phone, password_hash) VALUES ('Other Phone', ?, 'test-only')", [other]);
+    await expect(pool.query("INSERT INTO users (name, phone, password_hash) VALUES ('Duplicate', ?, 'test-only')", [phone])).rejects.toMatchObject({ code: 'ER_DUP_ENTRY' });
+  } finally {
+    await pool.query('DELETE FROM users WHERE email = ? OR phone IN (?, ?)', [email, phone, phone + '0']);
+    await pool.query('DELETE FROM phone_signup_verifications WHERE phone = ?', [phone]);
+  }
+});
+
+
+test('IT-08 provider activation is reservation-bound and concurrent checks consume approval once', async () => {
+  const phone = `+1888${require('crypto').randomInt(1000000, 9999999)}`;
+  const now = Date.now(), first='8'.repeat(64), second='9'.repeat(64), providerSid=`VE${'9'.repeat(32)}`;
+  const reserve=(codeHash,timestamp)=>repo.reservePhoneSignupCode({name:'Verify Explorer',phone,codeHash,now:timestamp,expiresAt:timestamp+600000});
+  try {
+    await reserve(first,now);await reserve(second,now+60000);
+    expect(await repo.activatePhoneSignupCode(phone,first,providerSid,now+60001)).toBe(false);
+    const checkCode=jest.fn(async sid=>sid===providerSid);
+    const check=()=>repo.verifyPhoneSignupCode({phone,tokenHash:'a'.repeat(64),now:now+60002,verifiedUntil:now+660002,checkCode});
+    expect((await check()).status).toBe('invalid');expect(checkCode).not.toHaveBeenCalled();
+    expect(await repo.activatePhoneSignupCode(phone,second,providerSid,now+60001)).toBe(true);
+    const results=await Promise.all([check(),check()]);
+    expect(results.map(r=>r.status).sort()).toEqual(['invalid','verified']);
+    expect(checkCode).toHaveBeenCalledTimes(1);
+  } finally {await pool.query('DELETE FROM phone_signup_verifications WHERE phone = ?', [phone]);}
 });
