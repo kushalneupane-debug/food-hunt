@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import { searchNearby } from './api';
 import './App.css';
+import AuthPanel from './AuthPanel';
+import { getProfile } from './auth-api';
 
 export default function App() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [authScreen, setAuthScreen] = useState(null);
+  // Keep the bearer token in memory; refreshing the page signs out.
+  const [session, setSession] = useState(null);
+  const [profileError, setProfileError] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
   const [selectedCuisine, setSelectedCuisine] = useState('All');
 
     const cuisineEmojis = {
@@ -19,7 +25,14 @@ export default function App() {
   };
 
   useEffect(() => {
-    handleSearch();
+    let active = true;
+    searchNearby({ lat: 33.4251, lng: -94.0477 })
+      .then((data) => {
+        if (active) setResults(Array.isArray(data) ? data : (data.results || []));
+      })
+      .catch((failure) => { if (active) setError(failure.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
   // Default Texarkana coordinates
@@ -71,78 +84,41 @@ export default function App() {
           (item) =>
             item.cuisine?.toLowerCase() === selectedCuisine.toLowerCase()
         );
+  function signOut() {
+    setSession(null);
+    setAuthScreen(null);
+    setProfileError('');
+  }
+
+  async function openProfile() {
+    setProfileLoading(true);
+    setProfileError('');
+    try {
+      const { user } = await getProfile(session.token);
+      setSession((current) => current ? { ...current, user } : null);
+      setAuthScreen('profile');
+    } catch (failure) {
+      if (failure.status === 401) {
+        setSession(null);
+        setAuthScreen('signin');
+        setProfileError('Your session expired. Please sign in again.');
+      } else {
+        setProfileError(failure.message);
+      }
+    } finally {
+      setProfileLoading(false);
+    }
+  }
+
   if (authScreen) {
-    const isSignUp = authScreen === 'signup';
-
-    return (
-      <div className="auth-page">
-        <div className="auth-card">
-          <button
-            type="button"
-            className="auth-back"
-            onClick={() => setAuthScreen(null)}
-          >
-            ← Back to Home
-          </button>
-
-          <div className="auth-logo">🍲 Food Hunt</div>
-
-          <h2>{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
-          <p>
-            {isSignUp
-              ? 'Create an account to get started.'
-              : 'Sign in to your Food Hunt account.'}
-          </p>
-
-          <form onSubmit={(e) => e.preventDefault()}>
-            {isSignUp && (
-              <label>
-                Full Name
-                <input
-                  type="text"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </label>
-            )}
-
-            <label>
-              Email
-              <input
-                type="email"
-                placeholder="Enter your email"
-                required
-              />
-            </label>
-
-            <label>
-              Password
-              <input
-                type="password"
-                placeholder="Enter your password"
-                required
-              />
-            </label>
-
-            <button type="submit" className="auth-submit">
-              {isSignUp ? 'Create Account' : 'Sign In'}
-            </button>
-          </form>
-
-          <p className="auth-switch">
-            {isSignUp
-              ? 'Already have an account?'
-              : "Don't have an account?"}{' '}
-            <button
-              type="button"
-              onClick={() => setAuthScreen(isSignUp ? 'signin' : 'signup')}
-            >
-              {isSignUp ? 'Sign In' : 'Create Account'}
-            </button>
-          </p>
-        </div>
-      </div>
-    );
+    return <>
+      {profileError && <p className="auth-error" role="alert">{profileError}</p>}
+      <AuthPanel screen={authScreen} user={session?.user}
+        onClose={() => { setAuthScreen(null); setProfileError(''); }}
+        onScreenChange={setAuthScreen}
+        onLogin={(next) => { setSession(next); setProfileError(''); setAuthScreen('profile'); }}
+        onLogout={signOut} />
+    </>;
   }
 
 
@@ -163,22 +139,20 @@ export default function App() {
           <a href="#about">About</a>
         </nav>
         <div className="nav-buttons">
-          <button
-            className="sign-in"
-            onClick={() => setAuthScreen('signin')}
-          >
-            ♙ &nbsp; Sign In
-          </button>
-          <button
-            className="account-btn"
-            onClick={() => setAuthScreen('signup')}
-          >
-            Create Account
-          </button>
+          {session ? <>
+            <button className="account-btn" onClick={openProfile} disabled={profileLoading}>
+              {profileLoading ? 'Loading…' : 'My Profile'}
+            </button>
+            <button className="sign-out" onClick={signOut} disabled={profileLoading}>Sign Out</button>
+          </> : <>
+            <button className="sign-in" onClick={() => setAuthScreen('signin')}>Sign In</button>
+            <button className="account-btn" onClick={() => setAuthScreen('signup')}>Create Account</button>
+          </>}
         </div>
 
       </header>
 
+      {profileError && <p className="auth-error" role="alert">{profileError}</p>}
       {/* Hero Section */}
       <section className="hero">
         <div className="hero-content">

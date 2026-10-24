@@ -74,3 +74,22 @@ npm run test:integration
 
 Tests use explicit test secrets. Integration tests require MySQL and
 reset businesses, dishes, and reviews in the configured database.
+
+## Browser verification
+
+Run the API with `npm start` in `server/`, then `npm run dev` in `client/`.
+Open the URL printed by Vite.
+
+1. Create an account with a new email. Confirm the success notice opens Sign In.
+2. Try an incorrect password. Confirm the error appears and the form remains usable.
+3. Sign in with the correct password. Confirm the profile shows your name, email, and role.
+4. Go home and open My Profile. This fetches the protected profile again.
+5. Sign out. Confirm the Sign In and Create Account buttons return.
+6. Try registering the same email. Confirm the duplicate-email error appears.
+7. Sign in and refresh. The session is intentionally kept in memory and is cleared
+   on refresh; browser storage does not retain the token or password.
+
+For an existing AWS database, confirm the users table exists before checking this
+flow. Apply only the users CREATE TABLE statement if needed; do not reset the
+database with db:init. Deployment and production verification are separate from
+local checks.
