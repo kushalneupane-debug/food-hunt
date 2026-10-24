@@ -20,18 +20,27 @@ Lists the allowed values for dropdowns.
 |---|---|---|
 | lat, lng | yes | user's location (browser geolocation) |
 | radiusKm | no | default 25, max 100 |
-| q | no | dish **or** business name, e.g. `momo` |
+| q | no | what the person is craving, e.g. `tacos` (matches place names, cuisine, type and menu dishes; typos and related words handled, see below) |
 | cuisine | no | one of /meta cuisines |
 | category | no | `eat`, `drink`, `sweets` or `shop` (all categories when omitted) |
 
 ```json
-{ "count": 1, "results": [{
+{ "count": 1,
+  "craving": { "query": "momo", "typed": "mommo", "corrected": true, "terms": ["momo", "dumpling"] },
+  "results": [{
   "id": 1, "name": "Sample: Himalayan Momo House", "cuisine": "nepali",
   "vendorType": "restaurant", "priceLevel": 2, "address": "100 Sample St, Texarkana, TX",
   "lat": 33.4251, "lng": -94.0477, "distanceKm": 0.0,
-  "matchedDishes": ["Chicken Momo", "Veg Momo"], "avgAuthenticity": 5.0 }] }
+  "matchedDishes": ["Chicken Momo", "Veg Momo"], "avgAuthenticity": 5.0,
+  "avgRating": 4.7, "reviewCount": 1 }] }
 ```
 Results are sorted nearest first. `400` on invalid params.
+
+**Craving matching** (`server/src/cravings.js`): filler like "I'm craving some" is dropped, plurals are
+trimmed (`tacos` → `taco`), small typos are fixed against a list of common cravings (`tocos` → `tacos`,
+reported as `craving.corrected`), and related words are added (`boba` also finds `milk tea`, `coffee`
+finds `cortado`). Terms of 5+ letters match anywhere in a word; shorter ones must start a word, so
+`tea` finds "Milk Tea" but not "Steak". `avgRating` averages authenticity, taste and value.
 
 ## GET /businesses/:id
 Business plus `description`, `story`, `isLicensed`, `dishes[]` (`id, name, description, priceCents, isVegetarian`) and `reviews[]` (`id, authorName, authenticity, taste, value, comment, createdAt`). `404` if not found.

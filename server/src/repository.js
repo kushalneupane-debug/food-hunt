@@ -5,6 +5,18 @@
 
 const pointWkt = (lat, lng) => `POINT(${Number(lng)} ${Number(lat)})`;
 
+// LIKE patterns for craving terms. Long terms match anywhere ("birria" finds
+// "Quesabirria"); short ones must start a word, so "tea" finds "Milk Tea" but not "Steak".
+function likePatterns(terms) {
+  const out = [];
+  for (const raw of terms) {
+    const t = String(raw).replace(/[\\%_]/g, (c) => `\\${c}`);
+    if (t.length >= 5) out.push(`%${t}%`);
+    else out.push(`${t}%`, `% ${t}%`);
+  }
+  return out;
+}
+
 const { createContactVerification } = require('./contact-verification-repository');
 
 function createRepository(pool) {
@@ -70,20 +82,42 @@ function createRepository(pool) {
     },
 
     /**
-     * Dish-first nearby search.
-     * q matches a business name or any dish name on its menu.
+     * Craving-first nearby search, closest first.
+     * `terms` are what the person is craving ("taco", "birria", ...). A place matches
+     * when any term appears in its name, cuisine, type or any dish on its menu.
+     * Passing only `q` searches for that one word (older callers and tests).
      */
     async searchNearby({
       lat,
       lng,
       radiusKm = 25,
       q = '',
+      terms = null,
       cuisine = null,
       category = null,
       limit = 50,
     }) {
-      const like = `%${q}%`;
+      const words = (terms ?? (q ? [q] : [])).filter(Boolean);
+      const patterns = likePatterns(words);
       const origin = pointWkt(lat, lng);
+
+      // One "(col LIKE ? OR col LIKE ? ...)" group per column, built from the patterns.
+      const anyLike = (col) => `(${patterns.map(() => `${col} LIKE ?`).join(' OR ')})`;
+      const dishMatch = patterns.length ? anyLike('d.name') : 'FALSE';
+      const placeMatch = patterns.length
+        ? `(${['b.name', 'b.cuisine', "COALESCE(b.subcategory, '')"].map(anyLike).join(' OR ')}
+                 OR EXISTS (SELECT 1 FROM dishes d WHERE d.business_id = b.id AND ${dishMatch}))`
+        : 'TRUE';
+
+      const params = [
+        origin,
+        ...patterns,
+        cuisine, cuisine,
+        category, category,
+        ...(patterns.length ? [...patterns, ...patterns, ...patterns, ...patterns] : []),
+        Number(radiusKm),
+        Number(limit),
+      ];
 
       const [rows] = await pool.query(
         `SELECT b.id, b.name, b.cuisine, b.category, b.subcategory,
@@ -95,35 +129,22 @@ function createRepository(pool) {
                       ST_GeomFromText(?, 4326, 'axis-order=long-lat')) / 1000, 2) AS distanceKm,
                 (SELECT GROUP_CONCAT(d.name ORDER BY d.name SEPARATOR ', ')
                    FROM dishes d
-                  WHERE d.business_id = b.id AND ? <> '' AND d.name LIKE ?) AS matchedDishes,
+                  WHERE d.business_id = b.id AND ${dishMatch}) AS matchedDishes,
                 (SELECT ROUND(AVG(r.authenticity), 1)
                    FROM reviews r
-                  WHERE r.business_id = b.id) AS avgAuthenticity
+                  WHERE r.business_id = b.id) AS avgAuthenticity,
+                (SELECT ROUND(AVG((r.authenticity + r.taste + r.value) / 3), 1)
+                   FROM reviews r
+                  WHERE r.business_id = b.id) AS avgRating,
+                (SELECT COUNT(*) FROM reviews r WHERE r.business_id = b.id) AS reviewCount
            FROM businesses b
           WHERE (? IS NULL OR b.cuisine = ?)
             AND (? IS NULL OR b.category = ?)
-            AND (? = '' OR b.name LIKE ?
-                 OR EXISTS (
-                   SELECT 1 FROM dishes d
-                    WHERE d.business_id = b.id AND d.name LIKE ?
-                 ))
+            AND ${placeMatch}
          HAVING distanceKm <= ?
           ORDER BY distanceKm ASC
           LIMIT ?`,
-        [
-          origin,
-          q,
-          like,
-          cuisine,
-          cuisine,
-          category,
-          category,
-          q,
-          like,
-          like,
-          Number(radiusKm),
-          Number(limit),
-        ]
+        params
       );
 
       return rows.map((r) => ({
@@ -133,6 +154,8 @@ function createRepository(pool) {
         distanceKm: Number(r.distanceKm),
         avgAuthenticity:
           r.avgAuthenticity === null ? null : Number(r.avgAuthenticity),
+        avgRating: r.avgRating === null ? null : Number(r.avgRating),
+        reviewCount: Number(r.reviewCount),
         matchedDishes: r.matchedDishes ? r.matchedDishes.split(', ') : [],
       }));
     },
@@ -242,4 +265,4 @@ function createRepository(pool) {
   };
 }
 
-module.exports = { createRepository, pointWkt };
+module.exports = { createRepository, pointWkt, likePatterns };

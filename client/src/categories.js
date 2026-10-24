@@ -85,3 +85,17 @@ export function splitSample(name = '') {
   const isSample = name.startsWith('Sample: ');
   return { isSample, name: isSample ? name.slice(8) : name };
 }
+
+// Opens turn-by-turn directions in Google Maps (app on phones, website elsewhere).
+export const directionsUrl = (place) =>
+  `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`;
+
+// Rough drive time for the spotlight: ~30 mph average around town, at least 1 minute.
+export function minutesAway(km) {
+  if (km == null) return '';
+  const min = Math.max(1, Math.round((km / 1.609344 / 30) * 60));
+  return `about ${min} min drive`;
+}
+
+export const ratingLabel = (place) =>
+  place.avgRating != null ? `★ ${Number(place.avgRating).toFixed(1)} (${place.reviewCount})` : 'No reviews yet';

@@ -1,5 +1,6 @@
 const express = require('express');
 const v = require('../validation');
+const { expandCraving } = require('../cravings');
 
 // Wraps async handlers so thrown errors reach the error middleware.
 const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
@@ -7,17 +8,19 @@ const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 function businessRoutes(repo) {
   const router = express.Router();
 
-  // FR-1 / FR-2: dish-first "near me" search
+  // FR-1 / FR-2: craving-first "near me" search ("tacos" -> nearest places with tacos)
   router.get('/search', wrap(async (req, res) => {
     const parsed = v.searchQuery.safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid search parameters', details: parsed.error.flatten() });
     }
     const { lat, lng, radiusKm, q, cuisine, category } = parsed.data;
+    const craving = expandCraving(q);
     const results = await repo.searchNearby({
-      lat, lng, radiusKm, q, cuisine: cuisine ?? null, category: category ?? null,
+      lat, lng, radiusKm, q: craving.query, terms: craving.terms,
+      cuisine: cuisine ?? null, category: category ?? null,
     });
-    res.json({ count: results.length, results });
+    res.json({ count: results.length, craving, results });
   }));
 
   // FR-3: business detail with menu and reviews

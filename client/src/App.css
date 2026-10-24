@@ -1037,3 +1037,348 @@ button:disabled {
     padding: 1.6rem 1.3rem;
   }
 }
+
+/* ---------- Craving search ---------- */
+.search {
+  align-items: center;
+}
+
+.search__label {
+  padding-left: 1rem;
+  font-family: var(--display);
+  font-size: 1.1rem;
+  color: var(--eat);
+  white-space: nowrap;
+}
+
+.search input {
+  padding-left: 0.4rem;
+}
+
+.fixed-typo {
+  margin: -0.5rem 0 1.25rem;
+  color: var(--muted);
+}
+
+/* "Closest tacos" spotlight: the direct answer to the craving */
+.spot {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1rem 2rem;
+  margin-bottom: 2rem;
+  padding: 2rem clamp(1.25rem, 3vw, 2rem) 1.5rem;
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--tone) 12%, white);
+  box-shadow: 8px 8px 0 var(--tone);
+  animation: pop 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+.spot__stamp {
+  position: absolute;
+  top: -0.95rem;
+  left: 1.25rem;
+  padding: 0.2rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--shop);
+  font-weight: 800;
+  text-transform: capitalize;
+  transform: rotate(-2deg);
+}
+
+.spot__main {
+  display: flex;
+  gap: 1.1rem;
+  align-items: flex-start;
+}
+
+.spot__emoji {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  font-size: 2.3rem;
+}
+
+.spot h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+  line-height: 1.1;
+}
+
+.spot__dishes {
+  margin-top: 0.35rem;
+  font-size: 1.05rem;
+}
+
+.spot__dishes mark {
+  background: color-mix(in srgb, var(--shop) 45%, white);
+  color: var(--ink);
+  font-weight: 700;
+  padding: 0 0.25rem;
+  border-radius: 4px;
+}
+
+.spot__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1rem;
+  margin-top: 0.6rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.spot__facts strong {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.6rem;
+  color: var(--ink);
+}
+
+.spot__addr {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.spot__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.spot__actions .btn {
+  padding: 0.75rem 1.4rem;
+  text-decoration: none;
+  text-align: center;
+}
+
+.spot__actions .btn--ghost {
+  background: var(--paper);
+  border-color: var(--ink);
+}
+
+.spot__alt {
+  grid-column: 1 / -1;
+  justify-self: start;
+  border: 0;
+  border-top: 2px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+  background: none;
+  width: 100%;
+  padding: 0.9rem 0 0;
+  text-align: left;
+  color: var(--ink);
+}
+
+.spot__alt span {
+  font-weight: 800;
+}
+
+.spot__alt:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.97);
+    opacity: 0;
+  }
+}
+
+/* ---------- List + map ---------- */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.split__map {
+  position: sticky;
+  top: 1rem;
+  /* Leaflet uses high z-indexes inside; keep them below the drawer. */
+  isolation: isolate;
+  z-index: 0;
+}
+
+.map {
+  height: calc(100vh - 2rem);
+  max-height: 44rem;
+  min-height: 22rem;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: 5px 5px 0 var(--ink);
+  background: var(--sage);
+}
+
+.grid--list {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 1.25rem;
+}
+
+.sort {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  padding: 0.25rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+}
+
+.sort button {
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  padding: 0.35rem 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.sort button[aria-pressed='true'] {
+  background: var(--ink);
+  color: #fff;
+}
+
+/* Card number matches its map pin */
+.card__n {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  min-width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.card__pick {
+  right: 3.2rem;
+}
+
+.card--focus {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--tone);
+  outline: 3px solid var(--tone);
+  outline-offset: 3px;
+}
+
+.drawer__go {
+  display: inline-block;
+  margin-top: 0.9rem;
+  text-decoration: none;
+}
+
+/* ---------- Map pins ---------- */
+.pin-wrap {
+  background: none;
+  border: 0;
+}
+
+.pin {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--ink);
+  border-radius: 50% 50% 50% 0;
+  background: var(--tone);
+  transform: rotate(-45deg);
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.15s ease;
+}
+
+.pin__emoji {
+  transform: rotate(45deg);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.pin--nearest .pin__emoji {
+  font-size: 1.55rem;
+}
+
+.pin__n {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.45rem;
+  transform: rotate(45deg);
+  min-width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font: 800 0.65rem/0.85rem var(--body);
+  text-align: center;
+}
+
+.pin--nearest {
+  outline: 3px solid var(--shop);
+  outline-offset: 2px;
+}
+
+.pin-wrap--focus .pin {
+  transform: rotate(-45deg) scale(1.25);
+}
+
+.you-dot {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2f7cf6;
+  border: 4px solid #fff;
+  box-shadow: 0 0 0 2px rgba(47, 124, 246, 0.35), 0 0 0 10px rgba(47, 124, 246, 0.15);
+}
+
+.leaflet-container {
+  font-family: var(--body);
+}
+
+.leaflet-tooltip {
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-weight: 700;
+  color: var(--ink);
+  box-shadow: none;
+}
+
+/* Phones and small tablets: map on top, list underneath */
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .split__map {
+    position: relative;
+    top: 0;
+    order: -1;
+  }
+
+  .map {
+    height: 18rem;
+    min-height: 0;
+  }
+
+  .spot {
+    grid-template-columns: 1fr;
+  }
+
+  .search__label {
+    font-size: 1rem;
+    padding-left: 0.8rem;
+  }
+}

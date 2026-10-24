@@ -1,15 +1,22 @@
 import { CATEGORIES } from '../categories';
 
-const QUICK_IDEAS = ['momo', 'tacos', 'boba', 'pho', 'kolache', 'coffee'];
+const QUICK_IDEAS = [
+  ['tacos', '🌮'],
+  ['momo', '🥟'],
+  ['boba', '🧋'],
+  ['pho', '🍜'],
+  ['coffee', '☕'],
+  ['kolache', '🥯'],
+];
 
 export default function Hero({ query, onQueryChange, onSearch, onUseLocation, locating, locationNote, onPickCategory }) {
   return (
     <section className="hero" aria-labelledby="hero-title">
       <div className="hero__text">
-        <h2 id="hero-title">What are you hungry for, Texarkana?</h2>
+        <h2 id="hero-title">What are you craving?</h2>
         <p className="hero__lede">
-          Family kitchens, coffee spots, bakeries and international markets, found by the thing you
-          actually want.
+          Type the thing you want. We&rsquo;ll show the closest local place in Texarkana that makes it, on a
+          map, with directions.
         </p>
 
         <form
@@ -20,26 +27,27 @@ export default function Hero({ query, onQueryChange, onSearch, onUseLocation, lo
             onSearch(query);
           }}
         >
-          <label htmlFor="q" className="visually-hidden">
-            Search by dish, drink or place
+          <label htmlFor="q" className="search__label">
+            I&rsquo;m craving
           </label>
           <input
             id="q"
             type="search"
             autoComplete="off"
-            placeholder="Try momo, boba, conchas…"
+            enterKeyHint="search"
+            placeholder="tacos, boba, momo…"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
           />
           <button type="submit" className="btn btn--ink">
-            Search
+            Find it
           </button>
         </form>
 
         <div className="hero__under">
           <p className="ideas">
             <span>Popular:</span>
-            {QUICK_IDEAS.map((idea) => (
+            {QUICK_IDEAS.map(([idea, emoji]) => (
               <button
                 key={idea}
                 type="button"
@@ -49,12 +57,12 @@ export default function Hero({ query, onQueryChange, onSearch, onUseLocation, lo
                   onSearch(idea);
                 }}
               >
-                {idea}
+                <span aria-hidden="true">{emoji}</span> {idea}
               </button>
             ))}
           </p>
           <button type="button" className="locate" onClick={onUseLocation} disabled={locating}>
-            📍 {locating ? 'Finding you…' : 'Use my location'}
+            📍 {locating ? 'Finding you…' : 'Near me'}
           </button>
         </div>
         {locationNote && <p className="hero__note">{locationNote}</p>}
