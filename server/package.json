@@ -11,7 +11,9 @@
     "test:integration": "jest tests/integration --runInBand",
     "test:all": "jest --runInBand",
     "db:init": "node db/init.js",
-    "db:migrate": "node db/migrate.js"
+    "db:migrate": "node db/migrate.js",
+    "db:fetch-places": "node db/fetch-places.js",
+    "db:import-places": "node db/import-places.js"
   },
   "engines": {
     "node": ">=20"

@@ -196,3 +196,35 @@ test('IT-10 short terms match whole words only, and ratings come back with resul
   expect(rated.avgRating).toBeGreaterThan(0);
   expect(all.length).toBeGreaterThan(0);
 });
+
+test('IT-11 importing real places removes samples, updates in place and attaches dishes', async () => {
+  const { importPlaces } = require('../../db/import-places');
+  const places = [
+    { osmId: 'node/9001', name: 'IT Real Taqueria', cuisine: 'mexican', category: 'eat', subcategory: null,
+      vendorType: 'restaurant', priceLevel: 1, address: '1 Real St, Texarkana, TX', lat: 33.426, lng: -94.048 },
+    { osmId: 'way/9002', name: 'IT Real Coffee', cuisine: 'other', category: 'drink', subcategory: 'coffee',
+      vendorType: 'cafe', priceLevel: 2, address: '2 Real St, Texarkana, TX', lat: 33.43, lng: -94.05 },
+  ];
+  const dishes = [
+    { place: 'IT Real Taqueria', dish: 'Al Pastor Tacos', price: '3.00', vegetarian: 'no' },
+    { place: 'Nowhere Diner', dish: 'Pie', price: '', vegetarian: '' },
+  ];
+
+  const first = await importPlaces(pool, { places, dishes });
+  expect(first).toMatchObject({ added: 2, dishesAdded: 1, unmatchedDishes: ['Nowhere Diner'] });
+  expect(first.samplesRemoved).toBeGreaterThan(0);
+
+  // Running again changes nothing and does not duplicate dishes.
+  const again = await importPlaces(pool, { places, dishes });
+  expect(again).toMatchObject({ added: 0, updated: 0, dishesAdded: 0 });
+
+  const [samples] = await pool.query("SELECT COUNT(*) AS n FROM businesses WHERE name LIKE 'Sample: %'");
+  expect(Number(samples[0].n)).toBe(0);
+
+  const tacos = await repo.searchNearby({ ...TXK, radiusKm: 25, terms: ['taco', 'mexican'] });
+  expect(tacos[0]).toMatchObject({ name: 'IT Real Taqueria', matchedDishes: ['Al Pastor Tacos'] });
+
+  // A place that left OpenStreetMap is removed on the next import.
+  const third = await importPlaces(pool, { places: places.slice(0, 1), dishes: [] });
+  expect(third.removed).toBe(1);
+});

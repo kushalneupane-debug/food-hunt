@@ -29,5 +29,9 @@ awk '/CREATE TABLE IF NOT EXISTS/,/;/' server/db/schema.sql |
 echo "==> Running database migrations"
 $COMPOSE exec -T app node db/migrate.js
 
+# Real Texarkana places (OpenStreetMap) and checked dishes. Updates in place; removes sample places.
+echo "==> Importing real places"
+$COMPOSE exec -T app node db/import-places.js
+
 sudo docker image prune -f >/dev/null
 echo "Updated. Check: curl -s localhost/api/health"

@@ -69,7 +69,7 @@ describe('GET /api/businesses/search with a craving', () => {
     const res = await request(app(repo)).get('/api/businesses/search').query({ ...TXK, q: 'mommo' });
     expect(res.status).toBe(200);
     expect(res.body.craving).toMatchObject({ query: 'momo', typed: 'mommo', corrected: true });
-    expect(repo.calls[0].params.terms).toEqual(['momo', 'dumpling']);
+    expect(repo.calls[0].params.terms).toEqual(['momo', 'dumpling', 'nepali']);
     expect(res.body.results[0].matchedDishes).toEqual(['Chicken Momo']);
   });
 

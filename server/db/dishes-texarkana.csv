@@ -1,0 +1,7 @@
+# Dishes for real places, so craving search can match them ("birria" -> the right taco truck).
+# One row per dish. "place" must match the name in places-texarkana.json exactly.
+# Only add dishes you have checked yourself (visited, called, or from the place's own menu/page).
+# Price is optional (8.50). vegetarian is yes/no (optional).
+# Example (remove the # to use it):
+# Tacos 4 Life,Street Tacos,,no
+place,dish,price,vegetarian

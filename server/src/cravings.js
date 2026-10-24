@@ -4,32 +4,33 @@
 // 2. Fix small typos against the craving list below ("tocos" -> "tacos").
 // 3. Add related words, so "boba" also finds "milk tea" and "coffee" finds "cortado".
 //
-// Each term is matched with LIKE %term%, so "taco" already matches "Birria Tacos".
+// Terms are matched against place names, cuisines, types and dishes. Cuisine words
+// ("mexican" for tacos) let places with no menu on file still show up for a craving.
 
 const CRAVINGS = {
-  tacos: ['taco', 'birria', 'al pastor', 'barbacoa', 'carnitas', 'taqueria'],
-  burrito: ['burrito'],
-  quesadilla: ['quesadilla', 'quesabirria'],
-  tamales: ['tamal'],
+  tacos: ['taco', 'birria', 'al pastor', 'barbacoa', 'carnitas', 'taqueria', 'mexican'],
+  burrito: ['burrito', 'mexican'],
+  quesadilla: ['quesadilla', 'quesabirria', 'mexican'],
+  tamales: ['tamal', 'mexican'],
   mexican: ['mexican', 'taco', 'burrito', 'enchilada', 'tamal'],
-  momo: ['momo', 'dumpling'],
+  momo: ['momo', 'dumpling', 'nepali'],
   dumplings: ['dumpling', 'momo', 'gyoza', 'potsticker', 'bao'],
-  pho: ['pho'],
+  pho: ['pho', 'vietnamese'],
   ramen: ['ramen'],
   noodles: ['noodle', 'pho', 'ramen', 'lo mein', 'pad thai', 'udon'],
-  sushi: ['sushi', 'sashimi', 'roll'],
-  curry: ['curry', 'masala', 'tikka', 'dal'],
-  biryani: ['biryani'],
+  sushi: ['sushi', 'sashimi', 'roll', 'japanese'],
+  curry: ['curry', 'masala', 'tikka', 'dal', 'indian'],
+  biryani: ['biryani', 'indian'],
   'banh mi': ['banh mi'],
   sandwich: ['sandwich', 'banh mi', 'po boy'],
-  bbq: ['bbq', 'barbecue', 'brisket', 'ribs', 'smoked'],
+  bbq: ['bbq', 'barbecue', 'brisket', 'ribs', 'smoked', 'smokehouse'],
   burger: ['burger'],
   pizza: ['pizza'],
   wings: ['wing'],
   'fried chicken': ['fried chicken', 'chicken'],
   'soul food': ['soul', 'smothered', 'collard', 'cornbread'],
-  crawfish: ['crawfish', 'etouffee', 'cajun'],
-  seafood: ['crawfish', 'shrimp', 'catfish', 'fish', 'oyster', 'etouffee'],
+  crawfish: ['crawfish', 'etouffee', 'cajun', 'bayou'],
+  seafood: ['seafood', 'crawfish', 'shrimp', 'catfish', 'fish', 'oyster', 'crab'],
   coffee: ['coffee', 'latte', 'espresso', 'cortado', 'cold brew', 'cappuccino', 'americano', 'roaster'],
   boba: ['boba', 'bubble tea', 'milk tea', 'tapioca'],
   tea: ['tea', 'chai'],
@@ -42,7 +43,7 @@ const CRAVINGS = {
   'ice cream': ['ice cream', 'gelato', 'paleta'],
   churros: ['churro'],
   breakfast: ['breakfast', 'kolache', 'taco', 'biscuit', 'pancake'],
-  groceries: ['grocery', 'market', 'rice', 'spice', 'masala'],
+  groceries: ['grocery', 'market', 'mercado', 'fruteria', 'rice', 'spice'],
   vegetarian: ['veg', 'vegetarian', 'tofu', 'paneer', 'dal'],
 };
 

@@ -17,6 +17,8 @@ CREATE TABLE businesses (
   price_level   TINYINT UNSIGNED NOT NULL CHECK (price_level BETWEEN 1 AND 4),
   address       VARCHAR(255)  NOT NULL,
   is_licensed   BOOLEAN       NOT NULL DEFAULT FALSE,
+  source        VARCHAR(20)   NOT NULL DEFAULT 'owner',  -- owner, osm (OpenStreetMap import) or sample
+  osm_id        VARCHAR(30)   NULL UNIQUE,              -- e.g. node/123, so re-imports update in place
   location      POINT NOT NULL SRID 4326,
   created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   SPATIAL INDEX idx_business_location (location),

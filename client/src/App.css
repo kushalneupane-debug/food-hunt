@@ -1382,3 +1382,8 @@ button:disabled {
     padding-left: 0.8rem;
   }
 }
+
+.footer a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
