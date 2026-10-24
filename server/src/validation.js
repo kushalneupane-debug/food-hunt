@@ -4,7 +4,10 @@ const CUISINES = [
   'nepali', 'indian', 'mexican', 'vietnamese', 'chinese', 'thai', 'korean',
   'japanese', 'ethiopian', 'middle-eastern', 'soul-food', 'cajun', 'bbq', 'other',
 ];
-const VENDOR_TYPES = ['restaurant', 'food-truck', 'pop-up', 'market-stall'];
+const VENDOR_TYPES = ['restaurant', 'food-truck', 'pop-up', 'market-stall', 'cafe', 'bakery', 'store'];
+// Top-level categories shown as tabs: places to eat, drink, get sweets, or shop for ingredients.
+const CATEGORIES = ['eat', 'drink', 'sweets', 'shop'];
+const subcategory = z.string().trim().toLowerCase().regex(/^[a-z0-9-]{2,40}$/, 'Use lowercase words joined by dashes');
 
 // Query strings arrive as text, so coerce numbers.
 const searchQuery = z.object({
@@ -13,6 +16,7 @@ const searchQuery = z.object({
   radiusKm: z.coerce.number().positive().max(100).default(25),
   q: z.string().trim().max(80).default(''),
   cuisine: z.enum(CUISINES).optional(),
+  category: z.enum(CATEGORIES).optional(),
 });
 
 const createBusiness = z.object({
@@ -20,6 +24,8 @@ const createBusiness = z.object({
   description: z.string().trim().max(1000).optional(),
   story: z.string().trim().max(2000).optional(),
   cuisine: z.enum(CUISINES),
+  category: z.enum(CATEGORIES).default('eat'),
+  subcategory: subcategory.optional(),
   vendorType: z.enum(VENDOR_TYPES),
   priceLevel: z.number().int().min(1).max(4),
   address: z.string().trim().min(5).max(255),
@@ -41,7 +47,7 @@ const createReview = z.object({
 
 const idParam = z.coerce.number().int().positive();
 
-module.exports = { CUISINES, VENDOR_TYPES, searchQuery, createBusiness, createReview, idParam };
+module.exports = { CUISINES, VENDOR_TYPES, CATEGORIES, searchQuery, createBusiness, createReview, idParam };
 
 
 // Authentication validation.

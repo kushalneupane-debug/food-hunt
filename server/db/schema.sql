@@ -11,7 +11,9 @@ CREATE TABLE businesses (
   description   VARCHAR(1000) NULL,
   story         VARCHAR(2000) NULL,            -- "our story": family / region the food comes from
   cuisine       VARCHAR(40)   NOT NULL,
-  vendor_type   ENUM('restaurant','food-truck','pop-up','market-stall') NOT NULL,
+  category      ENUM('eat','drink','sweets','shop') NOT NULL DEFAULT 'eat',
+  subcategory   VARCHAR(40)   NULL,            -- e.g. coffee, boba-tea, bakery, grocery
+  vendor_type   ENUM('restaurant','food-truck','pop-up','market-stall','cafe','bakery','store') NOT NULL,
   price_level   TINYINT UNSIGNED NOT NULL CHECK (price_level BETWEEN 1 AND 4),
   address       VARCHAR(255)  NOT NULL,
   is_licensed   BOOLEAN       NOT NULL DEFAULT FALSE,
@@ -19,6 +21,7 @@ CREATE TABLE businesses (
   created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   SPATIAL INDEX idx_business_location (location),
   INDEX idx_business_cuisine (cuisine),
+  INDEX idx_business_category (category),
   INDEX idx_business_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

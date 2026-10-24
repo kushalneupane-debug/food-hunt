@@ -79,13 +79,15 @@ function createRepository(pool) {
       radiusKm = 25,
       q = '',
       cuisine = null,
+      category = null,
       limit = 50,
     }) {
       const like = `%${q}%`;
       const origin = pointWkt(lat, lng);
 
       const [rows] = await pool.query(
-        `SELECT b.id, b.name, b.cuisine, b.vendor_type AS vendorType,
+        `SELECT b.id, b.name, b.cuisine, b.category, b.subcategory,
+                b.vendor_type AS vendorType,
                 b.price_level AS priceLevel, b.address,
                 ST_Latitude(b.location) AS lat,
                 ST_Longitude(b.location) AS lng,
@@ -99,6 +101,7 @@ function createRepository(pool) {
                   WHERE r.business_id = b.id) AS avgAuthenticity
            FROM businesses b
           WHERE (? IS NULL OR b.cuisine = ?)
+            AND (? IS NULL OR b.category = ?)
             AND (? = '' OR b.name LIKE ?
                  OR EXISTS (
                    SELECT 1 FROM dishes d
@@ -113,6 +116,8 @@ function createRepository(pool) {
           like,
           cuisine,
           cuisine,
+          category,
+          category,
           q,
           like,
           like,
@@ -134,7 +139,7 @@ function createRepository(pool) {
 
     async getBusinessById(id) {
       const [rows] = await pool.query(
-        `SELECT id, name, description, story, cuisine,
+        `SELECT id, name, description, story, cuisine, category, subcategory,
                 vendor_type AS vendorType,
                 price_level AS priceLevel,
                 address, is_licensed AS isLicensed,
@@ -186,15 +191,17 @@ function createRepository(pool) {
     async createBusiness(b) {
       const [result] = await pool.query(
         `INSERT INTO businesses
-           (name, description, story, cuisine, vendor_type, price_level,
+           (name, description, story, cuisine, category, subcategory, vendor_type, price_level,
             address, is_licensed, location)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                  ST_GeomFromText(?, 4326, 'axis-order=long-lat'))`,
         [
           b.name,
           b.description ?? null,
           b.story ?? null,
           b.cuisine,
+          b.category ?? 'eat',
+          b.subcategory ?? null,
           b.vendorType,
           b.priceLevel,
           b.address,

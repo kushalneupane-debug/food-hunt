@@ -5,7 +5,7 @@ const helmet = require('helmet');
 
 const { businessRoutes } = require('./routes/businesses');
 const { authRoutes } = require('./routes/auth');
-const { CUISINES, VENDOR_TYPES } = require('./validation');
+const { CUISINES, VENDOR_TYPES, CATEGORIES } = require('./validation');
 
 function createApp({
   repo,
@@ -43,6 +43,7 @@ function createApp({
     res.json({
       cuisines: CUISINES,
       vendorTypes: VENDOR_TYPES,
+      categories: CATEGORIES,
     });
   });
 

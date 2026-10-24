@@ -22,6 +22,7 @@ Lists the allowed values for dropdowns.
 | radiusKm | no | default 25, max 100 |
 | q | no | dish **or** business name, e.g. `momo` |
 | cuisine | no | one of /meta cuisines |
+| category | no | `eat`, `drink`, `sweets` or `shop` (all categories when omitted) |
 
 ```json
 { "count": 1, "results": [{
