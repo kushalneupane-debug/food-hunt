@@ -834,3 +834,16 @@ footer a:hover {
   background: #f5f0e5;
   color: #624a20;
 }
+
+.auth-error { color: #9b1c1c; padding: 12px; background: #fff0f0; }
+.auth-notice { color: #14523d; padding: 12px; background: #edf8ef; }
+button:disabled { opacity: 0.65; cursor: wait; }
+.profile-details { margin: 24px 0; overflow-wrap: anywhere; }
+.profile-details dt { font-weight: bold; margin-top: 16px; }
+.profile-details dd { margin: 4px 0 0; }
+.sign-out { border: none; background: transparent; color: #263a34; padding: 8px; }
+@media (max-width: 600px) {
+  .nav-buttons .sign-in { display: inline-block; }
+  .navbar { height: auto; min-height: 72px; flex-wrap: wrap; gap: 12px; padding: 16px 20px; }
+  .nav-buttons { gap: 6px; }
+}

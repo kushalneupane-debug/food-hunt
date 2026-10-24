@@ -50,4 +50,32 @@ Business plus `description`, `story`, `isLicensed`, `dishes[]` (`id, name, descr
 Ratings are integers 1–5. `201 { "id": 4 }`, `404` if the business doesn't exist.
 
 ## Coming in sprint 2
-Login (JWT), owner-only listing edits, photo uploads to S3. Endpoints that need auth will expect `Authorization: Bearer <token>`.
+Owner-only listing edits and photo uploads to S3. JWT authentication is available below.
+
+## Authentication
+
+See [authentication setup and validation rules](auth.md) for local configuration.
+Public registration creates explorer accounts; it cannot assign owner or admin roles.
+
+### POST /auth/register
+```json
+{ "name": "Test Explorer", "email": "explorer@example.com", "password": "ExamplePassword123!" }
+```
+Returns `201` with public `user` fields: `id`, `name`, `email`, and `role`.
+Invalid input returns `400`; a duplicate email returns `409`.
+Passwords must contain at least 8 characters and at most 72 UTF-8 bytes.
+
+### POST /auth/login
+Accepts email and password. Returns `200` with `token`, `tokenType: "Bearer"`,
+`expiresIn: 3600`, and public `user` details. Incorrect credentials return `401`;
+invalid input returns `400`. Password hashes are never included.
+
+### GET /auth/me
+Requires `Authorization: Bearer <token>`. Returns `200` with public `user` details.
+Missing, invalid, or expired tokens return `401`.
+
+### Browser flow
+Create Account submits registration and then opens Sign In with a success message.
+Sign In obtains a token and loads the protected profile. My Profile checks the token
+again. Sign Out clears the browser's in-memory session. Refreshing the page also
+signs out; tokens and passwords are not persisted in browser storage.
