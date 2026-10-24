@@ -24,5 +24,10 @@ echo "==> Applying new tables to the existing database"
 awk '/CREATE TABLE IF NOT EXISTS/,/;/' server/db/schema.sql |
   $COMPOSE exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot foodhunt'
 
+# Column changes to existing tables (e.g. users.phone) live in server/db/migrate.js.
+# It checks before altering, so running it on every deploy is safe.
+echo "==> Running database migrations"
+$COMPOSE exec -T app node db/migrate.js
+
 sudo docker image prune -f >/dev/null
 echo "Updated. Check: curl -s localhost/api/health"

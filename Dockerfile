@@ -16,6 +16,8 @@ ENV NODE_ENV=production PORT=4000 STATIC_DIR=/app/public
 COPY server/package*.json ./
 RUN npm ci --omit=dev
 COPY server/src ./src
+# Migrations run on deploy (deploy/update.sh) to upgrade an existing database
+COPY server/db ./db
 COPY --from=client /client/dist ./public
 USER node
 EXPOSE 4000
