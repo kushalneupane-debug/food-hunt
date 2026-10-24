@@ -12,6 +12,9 @@ function createApp({
   corsOrigins = ['http://localhost:5173'],
   jwtSecret = process.env.JWT_SECRET,
   staticDir = null,
+  mailer = null,
+  sms = null,
+  now = Date.now,
 }) {
   const app = express();
 
@@ -43,7 +46,7 @@ function createApp({
     });
   });
 
-  app.use('/api/auth', authRoutes(repo, jwtSecret));
+  app.use('/api/auth', authRoutes(repo, jwtSecret, { mailer, sms, now }));
   app.use('/api/businesses', businessRoutes(repo));
 
   // Serve the built frontend when configured.

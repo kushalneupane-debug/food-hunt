@@ -7,10 +7,15 @@ async function authRequest(path, options = {}) {
   } catch {
     throw new Error('Cannot reach Food Hunt. Please try again.');
   }
-  const data = await response.json();
+  let data;
+  try { data = await response.json(); } catch {
+    throw new Error('Food Hunt returned an empty or invalid response. Check that the API server is running.');
+  }
+  if (!data || typeof data !== 'object') throw new Error('Food Hunt returned an invalid response. Please try again.');
   if (!response.ok) {
     const error = new Error(data.error || 'Request failed. Please try again.');
     error.status = response.status;
+    error.retryAfter = data.retryAfter;
     throw error;
   }
   return data;
@@ -36,5 +41,17 @@ export function getProfile(token) {
   return authRequest('me', {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
+  });
+}
+
+export function requestSignupCode(details) {
+  return authRequest('signup/request-code', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(details),
+  });
+}
+
+export function verifySignupCode(details) {
+  return authRequest('signup/verify-code', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(details),
   });
 }

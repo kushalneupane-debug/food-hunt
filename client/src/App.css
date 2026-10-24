@@ -847,3 +847,18 @@ button:disabled { opacity: 0.65; cursor: wait; }
   .navbar { height: auto; min-height: 72px; flex-wrap: wrap; gap: 12px; padding: 16px 20px; }
   .nav-buttons { gap: 6px; }
 }
+
+.verification-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; }
+.verification-actions button { background: transparent; border: 0; color: #14523d; text-decoration: underline; }
+
+.auth-contact-choice {
+  border: 0;
+  padding: 0;
+  margin: 1rem 0;
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+}
+.auth-contact-choice legend { margin: 0 auto .5rem; font-weight: 600; }
+.auth-contact-choice label { display: flex; align-items: center; gap: .4rem; cursor: pointer; }
+.auth-contact-choice input { width: auto; margin: 0; accent-color: #185642; }
