@@ -19,14 +19,14 @@ function createFakeRepo({ failPing = false } = {}) {
     },
     async searchNearby(params) {
       calls.push({ fn: 'searchNearby', params });
-      const q = params.q.toLowerCase();
+      const terms = (params.terms ?? (params.q ? [params.q] : [])).map((t) => t.toLowerCase());
+      const hit = (text) => terms.some((t) => text.toLowerCase().includes(t));
       return businesses
         .filter((b) => !params.cuisine || b.cuisine === params.cuisine)
-        .filter((b) => !q || b.name.toLowerCase().includes(q)
-          || b.dishes.some((d) => d.name.toLowerCase().includes(q)))
+        .filter((b) => !terms.length || hit(b.name) || b.dishes.some((d) => hit(d.name)))
         .map(({ dishes, reviews: _r, ...rest }) => ({
           ...rest,
-          matchedDishes: q ? dishes.filter((d) => d.name.toLowerCase().includes(q)).map((d) => d.name) : [],
+          matchedDishes: terms.length ? dishes.filter((d) => hit(d.name)).map((d) => d.name) : [],
         }));
     },
     async getBusinessById(id) {

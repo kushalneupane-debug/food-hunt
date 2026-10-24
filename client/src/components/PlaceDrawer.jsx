@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createReview, getBusiness } from '../api';
-import { categoryById, dollars, placeKind, priceLabel, splitSample, vendorLabel } from '../categories';
+import { categoryById, directionsUrl, dollars, placeKind, priceLabel, splitSample, vendorLabel } from '../categories';
 
 const SCORES = [
   { key: 'authenticity', label: 'Authenticity' },
@@ -128,6 +128,9 @@ export default function PlaceDrawer({ id, onClose, userName }) {
                 {display.isSample && <span className="tag-sample">Sample</span>}
               </p>
               <p className="drawer__address">{place.address}</p>
+              <a className="btn btn--ink drawer__go" href={directionsUrl(place)} target="_blank" rel="noreferrer">
+                Get directions
+              </a>
             </header>
 
             {(place.story || place.description) && (

@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { searchNearby } from './api';
 import { getProfile } from './auth-api';
 import AuthPanel from './AuthPanel';
+import CravingMap from './components/CravingMap';
 import Hero from './components/Hero';
 import PlaceCard from './components/PlaceCard';
 import PlaceDrawer from './components/PlaceDrawer';
+import Spotlight from './components/Spotlight';
 import { CATEGORIES, chipInfo, chipKey } from './categories';
 import './App.css';
 
@@ -24,6 +26,11 @@ export default function App() {
   const [chip, setChip] = useState(null);
   const [openId, setOpenId] = useState(null);
 
+  // What the server understood the craving as ("tocos" -> tacos), how to sort, and which place is highlighted.
+  const [craving, setCraving] = useState(null);
+  const [sort, setSort] = useState('near');
+  const [focusId, setFocusId] = useState(null);
+
   // "Can't decide?" spin state
   const [litId, setLitId] = useState(null);
   const [pickedId, setPickedId] = useState(null);
@@ -41,9 +48,15 @@ export default function App() {
     setLoading(true);
     setError('');
     setPickedId(null);
+    setFocusId(null);
     try {
       const data = await searchNearby({ lat: at.lat, lng: at.lng, q: q.trim(), radiusKm: RADIUS_KM });
       setResults(data.results || []);
+      setCraving(data.craving?.query ? data.craving : null);
+      // Jump straight to the answer after a craving search.
+      if (q.trim()) {
+        requestAnimationFrame(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -116,7 +129,31 @@ export default function App() {
     return [...seen.entries()].sort((a, b) => b[1] - a[1]);
   }, [inCategory, category]);
 
-  const visible = chip ? inCategory.filter((r) => chipKey(r) === chip) : inCategory;
+  // Memoized so the map only redraws when the results really change (not on every hover).
+  const filtered = useMemo(
+    () => (chip ? inCategory.filter((r) => chipKey(r) === chip) : inCategory),
+    [inCategory, chip]
+  );
+
+  // Results come back closest first. "Top rated" puts reviewed places first, closest breaking ties.
+  const visible = useMemo(
+    () =>
+      sort === 'top'
+        ? [...filtered].sort((a, b) => (b.avgRating ?? -1) - (a.avgRating ?? -1) || a.distanceKm - b.distanceKm)
+        : filtered,
+    [filtered, sort]
+  );
+  const nearest = filtered.reduce((best, p) => (!best || p.distanceKm < best.distanceKm ? p : best), null);
+  const topRated = filtered.reduce(
+    (best, p) => (p.avgRating != null && (!best || p.avgRating > best.avgRating) ? p : best),
+    null
+  );
+
+  // Tapping a pin highlights its card and scrolls it into view.
+  function focusPlace(id) {
+    setFocusId(id);
+    document.getElementById(`place-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 
   // Shuffle a highlight across the cards, then land on one at random.
   function spin() {
@@ -196,8 +233,8 @@ export default function App() {
   }
 
   const activeCat = CATEGORIES.find((c) => c.id === category);
-  const heading = query.trim()
-    ? `${visible.length} ${visible.length === 1 ? 'place has' : 'places have'} “${query.trim()}”`
+  const heading = craving
+    ? `${visible.length} ${visible.length === 1 ? 'place' : 'places'} for ${craving.query} near you`
     : activeCat
       ? `${activeCat.label}: ${visible.length} ${visible.length === 1 ? 'spot' : 'spots'} nearby`
       : `${visible.length} local spots nearby`;
@@ -309,11 +346,51 @@ export default function App() {
 
           {!error && loading && results.length === 0 && <p className="muted">Finding places…</p>}
 
+          {craving?.corrected && (
+            <p className="fixed-typo">
+              Showing results for <strong>{craving.query}</strong> (you typed “{craving.typed}”).
+            </p>
+          )}
+
+          {!error && craving && nearest && (
+            <Spotlight craving={craving.query} nearest={nearest} topRated={topRated} onOpen={setOpenId} onFocus={focusPlace} />
+          )}
+
           {!error && visible.length > 0 && (
-            <div className="grid">
-              {visible.map((p) => (
-                <PlaceCard key={p.id} place={p} onOpen={setOpenId} highlighted={litId === p.id} picked={pickedId === p.id} />
-              ))}
+            <div className="split">
+              <div className="split__list">
+                <div className="sort" role="group" aria-label="Sort places">
+                  <button aria-pressed={sort === 'near'} onClick={() => setSort('near')}>
+                    Closest
+                  </button>
+                  <button aria-pressed={sort === 'top'} onClick={() => setSort('top')}>
+                    Top rated
+                  </button>
+                </div>
+                <div className="grid grid--list">
+                  {visible.map((p, i) => (
+                    <PlaceCard
+                      key={p.id}
+                      place={p}
+                      number={i + 1}
+                      onOpen={setOpenId}
+                      onFocus={setFocusId}
+                      highlighted={litId === p.id}
+                      focused={focusId === p.id}
+                      picked={pickedId === p.id}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="split__map">
+                <CravingMap
+                  places={visible}
+                  origin={where}
+                  nearestId={nearest?.id}
+                  focusId={litId ?? focusId}
+                  onSelect={focusPlace}
+                />
+              </div>
             </div>
           )}
 
@@ -321,7 +398,7 @@ export default function App() {
             <div className="empty">
               <p>
                 {query.trim()
-                  ? `Nothing nearby has “${query.trim()}” yet.`
+                  ? `No place nearby has ${craving?.query || query.trim()} yet. Try another craving, or tell us where to find it.`
                   : 'No places in this category yet. Know a good one? Tell us.'}
               </p>
               <div className="empty__actions">

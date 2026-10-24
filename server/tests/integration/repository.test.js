@@ -174,3 +174,25 @@ test('IT-08 provider activation is reservation-bound and concurrent checks consu
     expect(checkCode).toHaveBeenCalledTimes(1);
   } finally {await pool.query('DELETE FROM phone_signup_verifications WHERE phone = ?', [phone]);}
 });
+
+test('IT-09 craving search: "tocos" finds the taco place nearest first, with its taco dishes', async () => {
+  const app = createApp({ repo, jwtSecret: 'food-hunt-integration-test-secret' });
+  const res = await request(app).get('/api/businesses/search').query({ ...TXK, q: 'tocos', radiusKm: 25 });
+  expect(res.status).toBe(200);
+  expect(res.body.craving).toMatchObject({ query: 'tacos', corrected: true });
+  expect(res.body.results.length).toBeGreaterThan(0);
+  expect(res.body.results[0].matchedDishes).toEqual(expect.arrayContaining(['Birria Tacos', 'Quesabirria']));
+  const d = res.body.results.map((r) => r.distanceKm);
+  expect(d).toEqual([...d].sort((a, b) => a - b));
+});
+
+test('IT-10 short terms match whole words only, and ratings come back with results', async () => {
+  const tea = await repo.searchNearby({ ...TXK, radiusKm: 25, terms: ['tea'] });
+  for (const r of tea) {
+    expect(`${r.name} ${r.matchedDishes.join(' ')}`.toLowerCase()).not.toMatch(/steak/);
+  }
+  const all = await repo.searchNearby({ ...TXK, radiusKm: 25, terms: [] });
+  const rated = all.find((r) => r.reviewCount > 0);
+  expect(rated.avgRating).toBeGreaterThan(0);
+  expect(all.length).toBeGreaterThan(0);
+});

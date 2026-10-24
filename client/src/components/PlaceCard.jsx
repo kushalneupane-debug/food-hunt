@@ -1,6 +1,6 @@
 import { categoryById, milesLabel, placeKind, priceLabel, splitSample, vendorLabel } from '../categories';
 
-export default function PlaceCard({ place, onOpen, highlighted, picked }) {
+export default function PlaceCard({ place, number, onOpen, onFocus, highlighted, focused, picked }) {
   const cat = categoryById(place.category || 'eat');
   const kind = placeKind(place);
   const { name, isSample } = splitSample(place.name);
@@ -8,15 +8,25 @@ export default function PlaceCard({ place, onOpen, highlighted, picked }) {
   return (
     <article
       id={`place-${place.id}`}
-      className={`card${highlighted ? ' card--lit' : ''}${picked ? ' card--picked' : ''}`}
+      className={`card${highlighted ? ' card--lit' : ''}${focused ? ' card--focus' : ''}${picked ? ' card--picked' : ''}`}
       style={{ '--tone': cat.color }}
     >
-      <button className="card__hit" onClick={() => onOpen(place.id)}>
+      <button
+        className="card__hit"
+        onClick={() => onOpen(place.id)}
+        onMouseEnter={() => onFocus?.(place.id)}
+        onFocus={() => onFocus?.(place.id)}
+      >
         <div className="card__band">
           <span className="card__emoji" aria-hidden="true">
             {kind.emoji}
           </span>
           <span className="card__kind">{kind.label}</span>
+          {number && (
+            <span className="card__n" aria-label={`Map pin ${number}`}>
+              {number}
+            </span>
+          )}
           {picked && <span className="card__pick">Tonight's pick</span>}
         </div>
 
@@ -25,7 +35,7 @@ export default function PlaceCard({ place, onOpen, highlighted, picked }) {
           <p className="card__meta">
             <span>{vendorLabel(place.vendorType)}</span>
             <span aria-label={`Price level ${place.priceLevel} of 4`}>{priceLabel(place.priceLevel)}</span>
-            {place.avgAuthenticity != null && <span>★ {Number(place.avgAuthenticity).toFixed(1)}</span>}
+            {place.avgRating != null && <span>★ {Number(place.avgRating).toFixed(1)}</span>}
             {isSample && <span className="tag-sample">Sample</span>}
           </p>
           {place.matchedDishes?.length > 0 && (

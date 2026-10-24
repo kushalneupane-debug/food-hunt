@@ -23,6 +23,8 @@ function createApp({
     contentSecurityPolicy: {
       directives: {
         upgradeInsecureRequests: null,
+        // Map tiles come from OpenStreetMap.
+        imgSrc: ["'self'", 'data:', 'https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org'],
       },
     },
   }));
