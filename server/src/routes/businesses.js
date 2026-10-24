@@ -13,8 +13,10 @@ function businessRoutes(repo) {
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid search parameters', details: parsed.error.flatten() });
     }
-    const { lat, lng, radiusKm, q, cuisine } = parsed.data;
-    const results = await repo.searchNearby({ lat, lng, radiusKm, q, cuisine: cuisine ?? null });
+    const { lat, lng, radiusKm, q, cuisine, category } = parsed.data;
+    const results = await repo.searchNearby({
+      lat, lng, radiusKm, q, cuisine: cuisine ?? null, category: category ?? null,
+    });
     res.json({ count: results.length, results });
   }));
 
