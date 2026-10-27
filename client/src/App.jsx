@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { searchNearby } from './api';
 import { getProfile } from './auth-api';
 import AuthPanel from './AuthPanel';
 import CravingMap from './components/CravingMap';
 import Hero from './components/Hero';
+import HuntTogether from './components/HuntTogether';
 import PlaceCard from './components/PlaceCard';
 import PlaceDrawer from './components/PlaceDrawer';
 import Spotlight from './components/Spotlight';
+import StartHuntDialog from './components/StartHuntDialog';
 import { CATEGORIES, chipInfo, chipKey } from './categories';
 import './App.css';
 
@@ -30,6 +32,10 @@ export default function App() {
   const [craving, setCraving] = useState(null);
   const [sort, setSort] = useState('near');
   const [focusId, setFocusId] = useState(null);
+
+  // Hunt Together: the "start a hunt" form ({ place, craving } or null) and a counter to reload the list.
+  const [huntDialog, setHuntDialog] = useState(null);
+  const [huntsVersion, setHuntsVersion] = useState(0);
 
   // "Can't decide?" spin state
   const [litId, setLitId] = useState(null);
@@ -179,6 +185,9 @@ export default function App() {
     }, 90);
   }
 
+  // Stable, so the dialog's keyboard listener isn't re-added on every render.
+  const closeHuntDialog = useCallback(() => setHuntDialog(null), []);
+
   function signOut() {
     setSession(null);
     setAuthScreen(null);
@@ -250,6 +259,7 @@ export default function App() {
         </a>
         <nav className="topbar__nav" aria-label="Main">
           <a href="#places">Places</a>
+          <a href="#together">Hunt together</a>
           <a href="#about">About</a>
         </nav>
         <div className="topbar__account">
@@ -422,6 +432,15 @@ export default function App() {
             </div>
           )}
         </section>
+
+        <HuntTogether
+          where={where}
+          token={session?.token}
+          refreshKey={huntsVersion}
+          onStart={() => setHuntDialog({ place: null, craving: craving?.query || '' })}
+          onNeedSignIn={() => setAuthScreen('signin')}
+          onOpenPlace={setOpenId}
+        />
       </main>
 
       <footer className="footer" id="about">
@@ -441,7 +460,34 @@ export default function App() {
         </p>
       </footer>
 
-      {openId && <PlaceDrawer key={openId} id={openId} onClose={() => setOpenId(null)} userName={session?.user?.name} />}
+      {openId && (
+        <PlaceDrawer
+          key={openId}
+          id={openId}
+          onClose={() => setOpenId(null)}
+          userName={session?.user?.name}
+          onHuntHere={(place) => {
+            setOpenId(null);
+            if (!session) return setAuthScreen('signin');
+            setHuntDialog({ place: { id: place.id, name: place.name }, craving: craving?.query || '' });
+          }}
+        />
+      )}
+
+      {huntDialog && (
+        <StartHuntDialog
+          places={huntDialog.place ? [huntDialog.place, ...results.filter((r) => r.id !== huntDialog.place.id)] : results}
+          initialPlaceId={huntDialog.place?.id}
+          initialCraving={huntDialog.craving}
+          token={session?.token}
+          onClose={closeHuntDialog}
+          onCreated={() => {
+            setHuntDialog(null);
+            setHuntsVersion((v) => v + 1);
+            document.getElementById('together')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -28,6 +28,7 @@ small Texarkana food businesses get found.
 | 📍 **Real places** | 67 local Texarkana places imported from OpenStreetMap ([how it works](docs/real-places.md)). |
 | ⭐ **Reviews** | Rate authenticity, taste and value, and say what to order. |
 | 🔐 **Accounts** | Sign up with email or phone, verified by a one-time code (JWT sessions). |
+| 🧑‍🤝‍🧑 **Hunt together** | Don't eat alone: post a food meetup at a local place ("tacos at Los Tacos, Thu 6:30") or join one nearby. Public places only, verified 18+ accounts, first names only, and reporting built in. |
 | 🎲 **Can't decide?** | Spin to let Food Hunt pick a place for you. |
 
 ## Tech stack
@@ -38,7 +39,7 @@ small Texarkana food businesses get found.
 | Backend | Node.js, Express, Zod validation, JWT, bcrypt, Helmet, rate limiting |
 | Database | MySQL 8.4 with spatial queries (`ST_Distance_Sphere`) |
 | Email / SMS | Nodemailer (SMTP), Twilio Verify |
-| Testing | Jest + Supertest: 100 unit tests, 11 integration tests against real MySQL |
+| Testing | Jest + Supertest: 112 unit tests, 18 integration tests against real MySQL |
 | DevOps | Docker Compose, AWS EC2 (Elastic IP), GitHub Actions CI, GitGuardian |
 
 ## How it works

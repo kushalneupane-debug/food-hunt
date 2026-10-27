@@ -80,3 +80,26 @@ limits, migration, and deployment instructions.
 
 Direct registration without verification is rejected. Existing users continue to
 sign in with their email and password. Phone accounts sign in with their verified phone number and password. Password hashes are never returned.
+
+## Hunt Together (food meetups)
+People meet at a listed place to try food together. Browsing is public; everything else needs
+`Authorization: Bearer <token>`. Others only ever see first names.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/meetups?lat&lng[&radiusKm=40]` | Upcoming open meetups nearby, soonest first. Hides cancelled, past, and meetups with 3+ reports |
+| GET | `/meetups/:id` | One meetup. `members` (first names) is filled only for people in the group |
+| POST | `/meetups` | Host one: `{ businessId, craving, startsAt (ISO), maxPeople 2–8, note?, adultConfirmed: true }`. Must start 30 min–30 days from now. Max 3 upcoming per host. `201 { id }` |
+| POST | `/meetups/:id/join` | `{ adultConfirmed: true }` → `{ status: "joined" \| "already" }`, `409` when full or closed |
+| POST | `/meetups/:id/leave` | Hosts can't leave (`409`); they cancel |
+| POST | `/meetups/:id/cancel` | Host only (`403` otherwise) |
+| POST | `/meetups/:id/report` | `{ reason }` (5–500 chars). One report per person |
+
+```json
+{ "id": 1, "craving": "tacos", "note": "Grabbing a table by the window", "startsAt": "2026-10-28T00:30:00.000Z",
+  "maxPeople": 4, "going": 2, "spotsLeft": 2, "status": "open", "hostName": "Maria",
+  "isHost": false, "joined": false, "distanceKm": 0.48,
+  "place": { "id": 41, "name": "Los Tacos", "address": "422 North State Line Avenue, Texarkana, AR",
+             "category": "eat", "cuisine": "mexican", "lat": 33.42, "lng": -94.04 } }
+```
+Joining locks the meetup row, so two people can never take the same last seat.

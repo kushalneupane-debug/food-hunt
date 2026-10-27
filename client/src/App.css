@@ -1387,3 +1387,347 @@ button:disabled {
   color: inherit;
   text-underline-offset: 3px;
 }
+
+/* ---------- Hunt together ---------- */
+.together {
+  background: var(--ink);
+  color: #fff;
+  padding: clamp(3rem, 6vw, 5rem) 0;
+  scroll-margin-top: 0;
+}
+
+.together__inner {
+  width: min(100% - 2 * var(--gutter), var(--max) - 2 * var(--gutter));
+  margin-inline: auto;
+}
+
+.together__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.together__eyebrow,
+.dialog__eyebrow {
+  display: inline-block;
+  padding: 0.15rem 0.75rem;
+  border-radius: 999px;
+  background: var(--sweets);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.together h2 {
+  margin-top: 0.6rem;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  line-height: 1.05;
+}
+
+.together__lede {
+  margin-top: 0.6rem;
+  max-width: 48ch;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.1rem;
+}
+
+.btn--sun {
+  background: var(--shop);
+  color: var(--ink);
+  border: 2px solid #fff;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.05rem;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.btn--sun:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.3);
+}
+
+.together__msg {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.together__empty {
+  border: 2px dashed rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  max-width: 40rem;
+}
+
+.tickets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1.5rem;
+}
+
+/* A meetup "ticket": date stub on the left, tear line, details on the right */
+.ticket {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--tone);
+  overflow: hidden;
+}
+
+.ticket__when {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.1rem;
+  padding: 1rem 0.5rem;
+  background: var(--tone);
+  color: #fff;
+  border-right: 3px dashed var(--paper);
+  text-align: center;
+}
+
+.ticket__day {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.85rem;
+}
+
+.ticket__date {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.ticket__time {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ticket__body {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+}
+
+.ticket__craving {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  line-height: 1.1;
+  text-transform: capitalize;
+}
+
+.ticket__place {
+  font-weight: 600;
+}
+
+.ticket__note {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.ticket__seats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+.seat {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+}
+
+.seat--taken {
+  background: var(--tone);
+}
+
+.ticket__count {
+  margin-left: 0.4rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.ticket__going {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: var(--sage);
+}
+
+.ticket__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.ticket__in {
+  font-weight: 800;
+  color: var(--drink);
+}
+
+.ticket__report {
+  margin-left: auto;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.ticket__confirm {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--shop) 18%, white);
+}
+
+.linkish {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.safety {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1rem 1.5rem;
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.safety li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.6rem;
+  align-items: start;
+}
+
+.safety li > span:first-child {
+  grid-row: span 2;
+  font-size: 1.4rem;
+}
+
+.safety li > span:last-child {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+}
+
+/* Start-a-hunt dialog */
+.backdrop--center {
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.dialog {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 8px 8px 0 var(--sweets);
+  animation: pop 0.22s ease-out;
+}
+
+.dialog__eyebrow {
+  justify-self: start;
+}
+
+.dialog h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.dialog__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dialog select,
+.dialog input[type='date'],
+.dialog input[type='time'] {
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  background: var(--paper);
+}
+
+.dialog select:focus-visible,
+.dialog input:focus-visible {
+  border-color: var(--ink);
+}
+
+.check {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--sage);
+  font-size: 0.95rem;
+}
+
+.check input {
+  margin-top: 0.25rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--ink);
+}
+
+.dialog__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.drawer__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.drawer__ctas .btn--ghost {
+  border-color: var(--ink);
+}
+
+@media (max-width: 600px) {
+  .dialog__row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dialog__row .field:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .ticket {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+  }
+}
