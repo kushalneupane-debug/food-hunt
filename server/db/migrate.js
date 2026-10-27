@@ -5,7 +5,11 @@ const path = require('path');
 const { createPool } = require('../src/db');
 async function runMigrations(pool) {
   for (const file of fs.readdirSync(path.join(__dirname, 'migrations')).filter(f => f.endsWith('.sql')).sort()) {
-    await pool.query(fs.readFileSync(path.join(__dirname, 'migrations', file), 'utf8'));
+    // A file can hold several statements; the pool runs one at a time.
+    const sql = fs.readFileSync(path.join(__dirname, 'migrations', file), 'utf8');
+    for (const statement of sql.split(/;\s*(?:\r?\n|$)/)) {
+      if (statement.replace(/--.*$/gm, '').trim()) await pool.query(statement);
+    }
   }
   // MySQL does not support ADD COLUMN IF NOT EXISTS; inspect before altering.
   const [columns] = await pool.query(

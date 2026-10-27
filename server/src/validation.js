@@ -87,3 +87,32 @@ module.exports.loginUser = contactSchema({
   password: authZ.string().min(1).refine(value => Buffer.byteLength(value, 'utf8') <= 72,
     'Password must not exceed 72 bytes'),
 });
+
+// Hunt Together (food meetups).
+const meetupZ = require('zod').z;
+const DAY_MS = 24 * 60 * 60 * 1000;
+module.exports.MEETUP_LIMITS = { minLeadMs: 30 * 60 * 1000, maxAheadMs: 30 * DAY_MS, minPeople: 2, maxPeople: 8 };
+
+module.exports.meetupQuery = meetupZ.object({
+  lat: meetupZ.coerce.number().min(-90).max(90),
+  lng: meetupZ.coerce.number().min(-180).max(180),
+  radiusKm: meetupZ.coerce.number().positive().max(100).default(40),
+});
+
+module.exports.createMeetup = meetupZ.object({
+  businessId: meetupZ.number().int().positive(),
+  craving: meetupZ.string().trim().min(2).max(40),
+  note: meetupZ.string().trim().max(280).optional(),
+  startsAt: meetupZ.string().datetime({ offset: true }),
+  maxPeople: meetupZ.number().int().min(2).max(8),
+  // People meet strangers here, so hosts confirm they're adults and agree to the safety rules.
+  adultConfirmed: meetupZ.literal(true, { errorMap: () => ({ message: 'Confirm you are 18 or older' }) }),
+}).strict();
+
+module.exports.reportMeetup = meetupZ.object({
+  reason: meetupZ.string().trim().min(5).max(500),
+}).strict();
+
+module.exports.joinMeetup = meetupZ.object({
+  adultConfirmed: meetupZ.literal(true, { errorMap: () => ({ message: 'Confirm you are 18 or older' }) }),
+}).strict();

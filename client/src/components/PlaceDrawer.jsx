@@ -72,7 +72,7 @@ function ReviewForm({ placeId, defaultName, onPosted }) {
   );
 }
 
-export default function PlaceDrawer({ id, onClose, userName }) {
+export default function PlaceDrawer({ id, onClose, userName, onHuntHere }) {
   const [place, setPlace] = useState(null);
   const [error, setError] = useState('');
   const closeRef = useRef(null);
@@ -128,9 +128,16 @@ export default function PlaceDrawer({ id, onClose, userName }) {
                 {display.isSample && <span className="tag-sample">Sample</span>}
               </p>
               <p className="drawer__address">{place.address}</p>
-              <a className="btn btn--ink drawer__go" href={directionsUrl(place)} target="_blank" rel="noreferrer">
-                Get directions
-              </a>
+              <div className="drawer__ctas">
+                <a className="btn btn--ink drawer__go" href={directionsUrl(place)} target="_blank" rel="noreferrer">
+                  Get directions
+                </a>
+                {onHuntHere && (
+                  <button className="btn btn--ghost drawer__go" onClick={() => onHuntHere(place)}>
+                    🍽️ Find people to eat here
+                  </button>
+                )}
+              </div>
             </header>
 
             {(place.story || place.description) && (

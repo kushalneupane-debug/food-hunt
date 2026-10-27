@@ -5,6 +5,7 @@ const helmet = require('helmet');
 
 const { businessRoutes } = require('./routes/businesses');
 const { authRoutes } = require('./routes/auth');
+const { meetupRoutes } = require('./routes/meetups');
 const { CUISINES, VENDOR_TYPES, CATEGORIES } = require('./validation');
 
 function createApp({
@@ -51,6 +52,7 @@ function createApp({
 
   app.use('/api/auth', authRoutes(repo, jwtSecret, { mailer, sms, now }));
   app.use('/api/businesses', businessRoutes(repo));
+  app.use('/api/meetups', meetupRoutes(repo, jwtSecret, { now }));
 
   // Serve the built frontend when configured.
   if (staticDir) {

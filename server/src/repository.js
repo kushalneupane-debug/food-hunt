@@ -18,11 +18,13 @@ function likePatterns(terms) {
 }
 
 const { createContactVerification } = require('./contact-verification-repository');
+const { createMeetupRepository } = require('./meetup-repository');
 
 function createRepository(pool) {
   const emailVerification = createContactVerification(pool, 'email');
   const phoneVerification = createContactVerification(pool, 'phone');
   return {
+    ...createMeetupRepository(pool),
     reserveSignupCode({ email, ...details }) { return emailVerification.reserveCode({ contact: email, ...details }); },
     invalidateSignupCode(email, codeHash) { return emailVerification.invalidateCode(email, codeHash); },
     verifySignupCode({ email, ...details }) { return emailVerification.verifyCode({ contact: email, ...details }); },
