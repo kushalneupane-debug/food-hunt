@@ -37,6 +37,9 @@ function createFakeRepo({ failPing = false } = {}) {
       businesses.push({ id, ...b, dishes: [], reviews: [] });
       return id;
     },
+    async findUserById(id) {
+      return id === 404 ? null : { id, name: 'Kushal Neupane', role: 'explorer' };
+    },
     async businessExists(id) {
       return businesses.some((b) => b.id === id);
     },

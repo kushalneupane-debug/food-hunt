@@ -38,7 +38,8 @@ const createBusiness = z.object({
 
 const rating = z.number().int().min(1).max(5);
 const createReview = z.object({
-  authorName: z.string().trim().min(1).max(60),
+  // Ignored when sent: the server uses the signed-in account's first name.
+  authorName: z.string().trim().max(60).optional(),
   authenticity: rating,
   taste: rating,
   value: rating,

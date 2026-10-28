@@ -98,7 +98,7 @@ export default function StartHuntDialog({ places, initialPlaceId, initialCraving
 
         <label className="field">
           <span>Craving</span>
-          <input value={form.craving} maxLength={40} placeholder="tacos, sushi, boba…" onChange={(e) => set('craving', e.target.value)} />
+          <input value={form.craving} maxLength={40} placeholder="tacos, sushi, donuts…" onChange={(e) => set('craving', e.target.value)} />
         </label>
 
         <div className="dialog__row">

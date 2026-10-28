@@ -10,26 +10,25 @@ const SCORES = [
 
 const average = (reviews, key) => reviews.reduce((sum, r) => sum + r[key], 0) / reviews.length;
 
-function ReviewForm({ placeId, defaultName, onPosted }) {
-  const [form, setForm] = useState({ authorName: defaultName || '', authenticity: 0, taste: 0, value: 0, comment: '' });
+function ReviewForm({ placeId, userName, token, onPosted }) {
+  const [form, setForm] = useState({ authenticity: 0, taste: 0, value: 0, comment: '' });
   const [status, setStatus] = useState({ state: 'idle', message: '' });
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
   async function submit(e) {
     e.preventDefault();
-    if (!form.authorName.trim() || !form.authenticity || !form.taste || !form.value) {
-      setStatus({ state: 'error', message: 'Add your name and tap a score for each of the three ratings.' });
+    if (!form.authenticity || !form.taste || !form.value) {
+      setStatus({ state: 'error', message: 'Tap a score for each of the three ratings.' });
       return;
     }
     setStatus({ state: 'saving', message: '' });
     try {
       await createReview(placeId, {
-        authorName: form.authorName.trim(),
         authenticity: form.authenticity,
         taste: form.taste,
         value: form.value,
         ...(form.comment.trim() ? { comment: form.comment.trim() } : {}),
-      });
+      }, token);
       setForm((f) => ({ ...f, authenticity: 0, taste: 0, value: 0, comment: '' }));
       setStatus({ state: 'done', message: 'Review posted. Thanks for helping people find good food.' });
       onPosted();
@@ -41,10 +40,7 @@ function ReviewForm({ placeId, defaultName, onPosted }) {
   return (
     <form className="review-form" onSubmit={submit} noValidate>
       <h3>Been here? Rate it</h3>
-      <label className="field">
-        <span>Your name</span>
-        <input value={form.authorName} maxLength={60} onChange={(e) => set('authorName', e.target.value)} />
-      </label>
+      <p className="muted">Posting as {userName ? userName.trim().split(/\s+/)[0] : 'you'}.</p>
       {SCORES.map((s) => (
         <fieldset key={s.key} className="score">
           <legend>{s.label}</legend>
@@ -72,7 +68,7 @@ function ReviewForm({ placeId, defaultName, onPosted }) {
   );
 }
 
-export default function PlaceDrawer({ id, onClose, userName, onHuntHere }) {
+export default function PlaceDrawer({ id, onClose, userName, token, onNeedSignIn, onHuntHere }) {
   const [place, setPlace] = useState(null);
   const [error, setError] = useState('');
   const closeRef = useRef(null);
@@ -205,7 +201,17 @@ export default function PlaceDrawer({ id, onClose, userName, onHuntHere }) {
               )}
             </section>
 
-            <ReviewForm placeId={place.id} defaultName={userName} onPosted={load} />
+            {token ? (
+              <ReviewForm placeId={place.id} userName={userName} token={token} onPosted={load} />
+            ) : (
+              <div className="review-form">
+                <h3>Been here? Rate it</h3>
+                <p className="muted">Sign in to rate this place, so every review comes from a real person.</p>
+                <button className="btn btn--ink" onClick={onNeedSignIn}>
+                  Sign in to review
+                </button>
+              </div>
+            )}
           </>
         )}
       </aside>

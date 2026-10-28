@@ -2,6 +2,9 @@
 const request = require('supertest');
 const { createApp } = require('../../src/app');
 const { createFakeRepo } = require('./fakeRepo');
+const jwt = require('jsonwebtoken');
+
+const OWNER = `Bearer ${jwt.sign({ sub: '2', role: 'owner' }, 'categories-test-secret', { algorithm: 'HS256' })}`;
 const { runMigrations, seedSamplePlaces, SAMPLE_PLACES } = require('../../db/migrate');
 
 const TXK = { lat: 33.4251, lng: -94.0477 };
@@ -41,20 +44,20 @@ describe('creating a listing with a category', () => {
 
   test('TC-32 defaults to the eat category', async () => {
     const repo = createFakeRepo();
-    await request(app(repo)).post('/api/businesses').send({ ...base, vendorType: 'restaurant' });
+    await request(app(repo)).post('/api/businesses').set('Authorization', OWNER).send({ ...base, vendorType: 'restaurant' });
     expect((await repo.getBusinessById(2)).category).toBe('eat');
   });
 
   test('TC-33 stores category and subcategory', async () => {
     const repo = createFakeRepo();
-    const res = await request(app(repo)).post('/api/businesses')
+    const res = await request(app(repo)).post('/api/businesses').set('Authorization', OWNER)
       .send({ ...base, category: 'drink', subcategory: 'coffee' });
     expect(res.status).toBe(201);
     expect(await repo.getBusinessById(res.body.id)).toMatchObject({ category: 'drink', subcategory: 'coffee' });
   });
 
   test('TC-34 rejects a badly formatted subcategory', async () => {
-    const res = await request(app()).post('/api/businesses')
+    const res = await request(app()).post('/api/businesses').set('Authorization', OWNER)
       .send({ ...base, category: 'drink', subcategory: 'Coffee & Tea!' });
     expect(res.status).toBe(400);
   });

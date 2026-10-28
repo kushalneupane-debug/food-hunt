@@ -51,7 +51,7 @@ function createApp({
   });
 
   app.use('/api/auth', authRoutes(repo, jwtSecret, { mailer, sms, now }));
-  app.use('/api/businesses', businessRoutes(repo));
+  app.use('/api/businesses', businessRoutes(repo, jwtSecret));
   app.use('/api/meetups', meetupRoutes(repo, jwtSecret, { now }));
 
   // Serve the built frontend when configured.
