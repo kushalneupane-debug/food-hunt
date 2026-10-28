@@ -1,12 +1,13 @@
 import { CATEGORIES } from '../categories';
 
+// Cravings that have real places nearby (see db/places-texarkana.json).
 const QUICK_IDEAS = [
   ['tacos', '🌮'],
-  ['momo', '🥟'],
-  ['boba', '🧋'],
-  ['pho', '🍜'],
+  ['sushi', '🍣'],
   ['coffee', '☕'],
-  ['kolache', '🥯'],
+  ['donuts', '🍩'],
+  ['bbq', '🍖'],
+  ['burgers', '🍔'],
 ];
 
 export default function Hero({ query, onQueryChange, onSearch, onUseLocation, locating, locationNote, onPickCategory }) {
@@ -35,7 +36,7 @@ export default function Hero({ query, onQueryChange, onSearch, onUseLocation, lo
             type="search"
             autoComplete="off"
             enterKeyHint="search"
-            placeholder="tacos, boba, momo…"
+            placeholder="tacos, sushi, donuts…"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
           />

@@ -62,18 +62,22 @@ test('IT-04 create business and review round-trip through the API', async () => 
   repo,
   jwtSecret: 'food-hunt-integration-test-secret',
 });
-  const created = await request(app).post('/api/businesses').send({
+  const jwt = require('jsonwebtoken');
+  const userId = await repo.createUser({ name: 'QA Tester', email: `qa-${Date.now()}@it.test`, passwordHash: 'x' });
+  const as = (role) => `Bearer ${jwt.sign({ sub: String(userId), role }, 'food-hunt-integration-test-secret', { algorithm: 'HS256' })}`;
+  const created = await request(app).post('/api/businesses').set('Authorization', as('admin')).send({
     name: 'IT Momo Cart', cuisine: 'nepali', vendorType: 'food-truck', priceLevel: 1,
     address: '1 Integration Way', isLicensed: true, lat: 33.43, lng: -94.05,
   });
   expect(created.status).toBe(201);
 
-  const review = await request(app).post(`/api/businesses/${created.body.id}/reviews`)
+  const review = await request(app).post(`/api/businesses/${created.body.id}/reviews`).set('Authorization', as('explorer'))
     .send({ authorName: 'QA', authenticity: 5, taste: 4, value: 5 });
   expect(review.status).toBe(201);
 
   const detail = await request(app).get(`/api/businesses/${created.body.id}`);
   expect(detail.body.reviews).toHaveLength(1);
+  expect(detail.body.reviews[0].authorName).toBe('QA');
   expect(detail.body.lat).toBeCloseTo(33.43, 4);
   expect(detail.body.lng).toBeCloseTo(-94.05, 4);
 });

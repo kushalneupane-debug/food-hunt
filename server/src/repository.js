@@ -97,7 +97,7 @@ function createRepository(pool) {
       terms = null,
       cuisine = null,
       category = null,
-      limit = 50,
+      limit = 100,
     }) {
       const words = (terms ?? (q ? [q] : [])).filter(Boolean);
       const patterns = likePatterns(words);

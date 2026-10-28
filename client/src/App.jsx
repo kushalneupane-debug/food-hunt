@@ -466,6 +466,11 @@ export default function App() {
           id={openId}
           onClose={() => setOpenId(null)}
           userName={session?.user?.name}
+          token={session?.token}
+          onNeedSignIn={() => {
+            setOpenId(null);
+            setAuthScreen('signin');
+          }}
           onHuntHere={(place) => {
             setOpenId(null);
             if (!session) return setAuthScreen('signin');

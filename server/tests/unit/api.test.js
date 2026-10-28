@@ -8,6 +8,11 @@ const createApp = (options) => buildApp({
   jwtSecret: 'food-hunt-unit-test-secret',
 });
 const { createFakeRepo } = require('./fakeRepo');
+const jwt = require('jsonwebtoken');
+
+const bearer = (id = 1, role = 'explorer') =>
+  `Bearer ${jwt.sign({ sub: String(id), role }, 'food-hunt-unit-test-secret', { algorithm: 'HS256' })}`;
+const OWNER = bearer(2, 'owner');
 
 const TXK = { lat: 33.4251, lng: -94.0477 };
 
@@ -79,20 +84,27 @@ describe('POST /api/businesses', () => {
   };
 
   test('TC-09 creates a licensed listing', async () => {
-    const res = await request(createApp({ repo: createFakeRepo() })).post('/api/businesses').send(valid);
+    const res = await request(createApp({ repo: createFakeRepo() })).post('/api/businesses').set('Authorization', OWNER).send(valid);
     expect(res.status).toBe(201);
     expect(res.body.id).toBeGreaterThan(0);
   });
 
+  test('TC-75 only owner and admin accounts can add listings', async () => {
+    const app = createApp({ repo: createFakeRepo() });
+    expect((await request(app).post('/api/businesses').send(valid)).status).toBe(401);
+    expect((await request(app).post('/api/businesses').set('Authorization', bearer()).send(valid)).status).toBe(403);
+    expect((await request(app).post('/api/businesses').set('Authorization', bearer(3, 'admin')).send(valid)).status).toBe(201);
+  });
+
   test('TC-10 rejects unlicensed vendors', async () => {
     const res = await request(createApp({ repo: createFakeRepo() }))
-      .post('/api/businesses').send({ ...valid, isLicensed: false });
+      .post('/api/businesses').set('Authorization', OWNER).send({ ...valid, isLicensed: false });
     expect(res.status).toBe(400);
   });
 
   test('TC-11 rejects malformed JSON', async () => {
     const res = await request(createApp({ repo: createFakeRepo() }))
-      .post('/api/businesses').set('Content-Type', 'application/json').send('{bad json');
+      .post('/api/businesses').set('Authorization', OWNER).set('Content-Type', 'application/json').send('{bad json');
     expect(res.status).toBe(400);
   });
 });
@@ -102,20 +114,29 @@ describe('POST /api/businesses/:id/reviews', () => {
 
   test('TC-12 stores a review with three separate ratings', async () => {
     const repo = createFakeRepo();
-    const res = await request(createApp({ repo })).post('/api/businesses/1/reviews').send(review);
+    const res = await request(createApp({ repo })).post('/api/businesses/1/reviews').set('Authorization', bearer()).send(review);
     expect(res.status).toBe(201);
     expect(repo.reviews[0]).toMatchObject({ businessId: 1, authenticity: 5, taste: 5, value: 4 });
   });
 
+  test('TC-74 reviews need sign-in, and the name comes from the account, not the request', async () => {
+    const repo = createFakeRepo();
+    const app = createApp({ repo });
+    expect((await request(app).post('/api/businesses/1/reviews').send(review)).status).toBe(401);
+    await request(app).post('/api/businesses/1/reviews').set('Authorization', bearer())
+      .send({ ...review, authorName: 'Someone Else' });
+    expect(repo.reviews[0].authorName).toBe('Kushal');
+  });
+
   test('TC-13 rejects ratings outside 1-5', async () => {
     const res = await request(createApp({ repo: createFakeRepo() }))
-      .post('/api/businesses/1/reviews').send({ ...review, taste: 6 });
+      .post('/api/businesses/1/reviews').set('Authorization', bearer()).send({ ...review, taste: 6 });
     expect(res.status).toBe(400);
   });
 
   test('TC-14 returns 404 when reviewing a missing business', async () => {
     const res = await request(createApp({ repo: createFakeRepo() }))
-      .post('/api/businesses/999/reviews').send(review);
+      .post('/api/businesses/999/reviews').set('Authorization', bearer()).send(review);
     expect(res.status).toBe(404);
   });
 });

@@ -26,8 +26,8 @@ export function searchNearby({ lat, lng, q = '', radiusKm = 25 }) {
 
 export const getBusiness = (id) => request(`/businesses/${id}`);
 
-export const createReview = (id, review) =>
-  request(`/businesses/${id}/reviews`, { method: 'POST', body: JSON.stringify(review) });
+export const createReview = (id, review, token) =>
+  request(`/businesses/${id}/reviews`, { method: 'POST', body: JSON.stringify(review), token });
 
 // Hunt Together (food meetups). Browsing works signed out; the rest needs the session token.
 export function listMeetups({ lat, lng, radiusKm = 40, token }) {
