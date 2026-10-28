@@ -1,11 +1,25 @@
 import { useEffect, useRef } from 'react';
-import L from 'leaflet';
+import L from '../leaflet-global';
+import 'leaflet.markercluster';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
 import { categoryById, placeKind, splitSample } from '../categories';
 
-// Free OpenStreetMap tiles. Their policy requires this attribution to stay visible.
+// Free OpenStreetMap tiles. Their usage policy requires this credit to stay visible, and
+// requires each request to say which site it comes from (see referrerPolicy in server/src/app.js).
 const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+// Nearby pins merge into one bubble showing how many places are inside.
+function clusterIcon(cluster) {
+  const n = cluster.getChildCount();
+  const size = n < 10 ? 40 : n < 30 ? 48 : 56;
+  return L.divIcon({
+    className: 'pin-wrap',
+    html: `<span class="cluster" style="width:${size}px;height:${size}px">${n}</span>`,
+    iconSize: [size, size],
+  });
+}
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
@@ -36,6 +50,7 @@ export default function CravingMap({ places, origin, nearestId, focusId, onSelec
   const boxRef = useRef(null);
   const mapRef = useRef(null);
   const layerRef = useRef(null);
+  const youLayerRef = useRef(null);
   const markersRef = useRef(new Map());
   const selectRef = useRef(onSelect);
 
@@ -47,7 +62,14 @@ export default function CravingMap({ places, origin, nearestId, focusId, onSelec
   useEffect(() => {
     const map = L.map(boxRef.current, { scrollWheelZoom: false, zoomControl: true });
     L.tileLayer(TILES, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(map);
-    layerRef.current = L.layerGroup().addTo(map);
+    layerRef.current = L.markerClusterGroup({
+      iconCreateFunction: clusterIcon,
+      showCoverageOnHover: false,
+      maxClusterRadius: 44,
+      spiderfyOnMaxZoom: true,
+    }).addTo(map);
+    // "You are here" stays outside the clusters.
+    youLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     // The box can change size with the layout (list/map switch on phones).
     const resize = new ResizeObserver(() => map.invalidateSize());
@@ -63,11 +85,12 @@ export default function CravingMap({ places, origin, nearestId, focusId, onSelec
     const map = mapRef.current;
     const layer = layerRef.current;
     layer.clearLayers();
+    youLayerRef.current.clearLayers();
     markersRef.current.clear();
 
     const you = L.marker([origin.lat, origin.lng], { icon: youIcon, keyboard: false, zIndexOffset: -100 })
       .bindTooltip('You are here')
-      .addTo(layer);
+      .addTo(youLayerRef.current);
 
     places.forEach((p, i) => {
       const nearest = p.id === nearestId;
@@ -78,10 +101,10 @@ export default function CravingMap({ places, origin, nearestId, focusId, onSelec
         zIndexOffset: nearest ? 500 : 0,
       })
         .bindTooltip(escapeHtml(splitSample(p.name).name), { direction: 'top', offset: [0, nearest ? -50 : -38] })
-        .on('click', () => selectRef.current?.(p.id))
-        .addTo(layer);
+        .on('click', () => selectRef.current?.(p.id));
       markersRef.current.set(p.id, marker);
     });
+    layer.addLayers([...markersRef.current.values()]);
 
     const points = [you.getLatLng(), ...places.map((p) => [p.lat, p.lng])];
     if (places.length === 0) map.setView(you.getLatLng(), 12);
@@ -95,8 +118,9 @@ export default function CravingMap({ places, origin, nearestId, focusId, onSelec
       if (el) el.classList.toggle('pin-wrap--focus', id === focusId);
       marker.setZIndexOffset(id === focusId ? 1000 : id === nearestId ? 500 : 0);
     }
+    // Pan only to a pin that is actually drawn (not hidden inside a cluster bubble).
     const marker = markersRef.current.get(focusId);
-    if (marker && !mapRef.current.getBounds().pad(-0.1).contains(marker.getLatLng())) {
+    if (marker?.getElement() && !mapRef.current.getBounds().pad(-0.1).contains(marker.getLatLng())) {
       mapRef.current.panTo(marker.getLatLng());
     }
   }, [focusId, nearestId, places]);

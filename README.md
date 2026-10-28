@@ -35,7 +35,7 @@ small Texarkana food businesses get found.
 
 | Layer | Tools |
 |---|---|
-| Frontend | React 19, Vite, Leaflet + OpenStreetMap tiles |
+| Frontend | React 19, Vite, Leaflet + marker clustering, OpenStreetMap tiles |
 | Backend | Node.js, Express, Zod validation, JWT, bcrypt, Helmet, rate limiting |
 | Database | MySQL 8.4 with spatial queries (`ST_Distance_Sphere`) |
 | Email / SMS | Nodemailer (SMTP), Twilio Verify |
