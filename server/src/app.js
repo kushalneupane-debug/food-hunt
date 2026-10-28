@@ -25,9 +25,12 @@ function createApp({
       directives: {
         upgradeInsecureRequests: null,
         // Map tiles come from OpenStreetMap.
-        imgSrc: ["'self'", 'data:', 'https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org'],
+        imgSrc: ["'self'", 'data:', 'https://tile.openstreetmap.org'],
       },
     },
+    // OpenStreetMap's tile servers require the site's origin in the Referer header and
+    // answer "Access blocked" without it. Send only the origin to other sites, never the full URL.
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   }));
 
   app.use(cors({ origin: corsOrigins }));

@@ -80,8 +80,10 @@ describe('GET /api/businesses/search with a craving', () => {
     expect(res.body.count).toBe(1);
   });
 
-  test('TC-50 allows OpenStreetMap tiles in the content security policy', async () => {
+  test('TC-50 allows map tiles and sends the origin that tile servers require', async () => {
     const res = await request(app(createFakeRepo())).get('/api/health');
     expect(res.headers['content-security-policy']).toContain('https://tile.openstreetmap.org');
+    // "no-referrer" makes tile servers answer 403 "Access blocked".
+    expect(res.headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
   });
 });

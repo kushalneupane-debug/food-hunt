@@ -1731,3 +1731,20 @@ button:disabled {
     grid-template-columns: 4.5rem minmax(0, 1fr);
   }
 }
+
+/* Map: grouped pins */
+.cluster {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 3px var(--ink), 2px 3px 0 4px rgba(18, 59, 46, 0.25);
+  font: 800 1rem/1 var(--body);
+  transition: transform 0.15s ease;
+}
+
+.pin-wrap:hover .cluster {
+  transform: scale(1.08);
+}
